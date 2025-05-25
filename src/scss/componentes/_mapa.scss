@@ -1,0 +1,27 @@
+@use 'base/mixins' as m;
+
+.mapa {
+    height: 40rem;
+    margin-top: 5rem;
+    
+    &__heading {
+        font-size: 1.8rem;
+        text-align: left;
+        color: #000;
+        margin: 0;
+
+        @include m.telefono {
+            font-size: 2.4rem;
+        }
+    }
+
+    &__texto {
+        font-size: 1.2rem;
+        color: #000;
+        margin: 0;
+
+        @include m.telefono {
+            font-size: 1.8rem;
+        }
+    }
+}

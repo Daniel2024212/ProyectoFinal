@@ -25,9 +25,10 @@ class Email {
         $mail->Port = $_ENV['EMAIL_PORT'];
         $mail->Username = $_ENV['EMAIL_USER'];
         $mail->Password = $_ENV['EMAIL_PASS'];
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-        $mail->setFrom('cuentas@appsalon.com');
-        $mail->addAddress('cuentas@appsalon.com', 'www.appsalon.com');
+        $mail->setFrom('appsalon@gmail.com', 'AppSalon');
+        $mail->addAddress($this->email, 'AppSalon');
         $mail->Subject = 'Confirma tu cuenta';
 
         // Set HTML:
@@ -55,9 +56,10 @@ class Email {
         $mail->Port = $_ENV['EMAIL_PORT'];
         $mail->Username = $_ENV['EMAIL_USER'];
         $mail->Password = $_ENV['EMAIL_PASS'];
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
 
-        $mail->setFrom('cuentas@appsalon.com');
-        $mail->addAddress('cuentas@appsalon.com', 'www.appsalon.com');
+        $mail->setFrom('appsalon@gmail.com', 'AppSalon');
+        $mail->addAddress($this->email, 'AppSalon');
         $mail->Subject = 'Restablece tu password';
 
         // Set HTML:

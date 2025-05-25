@@ -52,9 +52,13 @@
     </div>
 </div>
 
+<div id="mapa" class="mapa"></div>
+
 <?php 
     $script = "
         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+        <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
         <script src='build/js/app.js'></script>
+        <script src='build/js/mapa.js'></script>
     ";
 ?>
