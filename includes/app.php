@@ -2,6 +2,7 @@
 
 use Dotenv\Dotenv;
 use Models\ActiveRecord;
+
 require __DIR__ . '/../vendor/autoload.php';
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->safeLoad();
