@@ -23,12 +23,10 @@ include_once __DIR__ . '/../templates/barra.php';
         <p class="text-center">Coloca tus datos y fecha de tu cita</p>
 
         <form class="formulario">
-            // ...existing code...
             <div class="campo">
                 <label for="nombre_cita">Nombre de la Cita</label>
-                <input id="nombre_cita" type="text" placeholder="Ingrese su nombre: " value="">
+                <input id="nombre_cliente" type="text" placeholder="Ingrese su nombre: " value="">
             </div> <!-- .campo -->
-            // ...existing code...
 
             <div class="campo">
                 <label for="fecha">Fecha</label>
