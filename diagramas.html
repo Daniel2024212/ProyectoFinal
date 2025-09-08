@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AppSalon – Diagramas (Segundo Avance)</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;line-height:1.45;margin:0;background:#0f172a;color:#e2e8f0}
+    header{padding:24px 20px;border-bottom:1px solid #1f2937;background:#111827;position:sticky;top:0}
+    h1{margin:0;font-size:22px}
+    main{max-width:1200px;margin:0 auto;padding:24px}
+    section{margin:28px 0;padding:20px;background:#0b1220;border:1px solid #1f2937;border-radius:16px}
+    h2{margin-top:0;font-size:18px}
+    .hint{font-size:14px;opacity:.8;margin-top:8px}
+    .mermaid{background:#0b1220;border-radius:12px;padding:12px;overflow:auto}
+    code{background:#111827;padding:2px 6px;border-radius:6px}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
+</head>
+<body>
+<header>
+  <h1>AppSalon – Diagramas del Segundo Avance (Mermaid)</h1>
+</header>
+<main>
+  <p class="hint">Sugerencia: abre este archivo localmente en tu navegador o en <a href="https://mermaid.live/" target="_blank" rel="noreferrer">mermaid.live</a> copiando cada bloque.</p>
+
+  <!-- 1. Casos de Uso (Resumen) -->
+  <section>
+    <h2>1) Casos de Uso (Resumen)</h2>
+    <div class="mermaid">
+      graph TD
+        subgraph Actores
+          A[Cliente]
+          B[Administrador]
+          C[Invitado]
+        end
+
+        subgraph Casos_de_Uso
+          UC1((Registrarse))
+          UC2((Iniciar sesión))
+          UC3((Agendar cita))
+          UC4((Administrar servicios))
+          UC5((Cancelar cita))
+        end
+
+        C --> UC1
+        A --> UC2
+        A --> UC3
+        A --> UC5
+        B --> UC2
+        B --> UC3
+        B --> UC4
+
+        classDef actor fill:#1e293b,stroke:#334155,color:#e2e8f0;
+        classDef usecase fill:#0ea5e9,stroke:#7dd3fc,color:#0b1220;
+        class A,B,C actor;
+        class UC1,UC2,UC3,UC4,UC5 usecase;
+    </div>
+  </section>
+
+  <!-- 2. Modelo de Dominio (Clase UML) -->
+  <section>
+    <h2>2) Modelo de Dominio (Clase UML)</h2>
+    <div class="mermaid">
+      classDiagram
+        direction LR
+        class Usuario {
+          +int id
+          +string nombre
+          +string email
+          +string passwordHash
+          +string rol
+        }
+        class Servicio {
+          +int id
+          +string nombre
+          +int duracionMin
+          +decimal precio
+          +bool activo
+        }
+        class Cita {
+          +int id
+          +datetime fecha
+          +string estado
+        }
+
+        Usuario "1" -- "*" Cita : agenda
+        Servicio "1" -- "*" Cita : se_solicita
+
+        note for Usuario "Roles: cliente | admin"
+        note for Cita "Estados: pendiente | confirmada | cancelada | realizada"
+    </div>
+  </section>
+
+  <!-- 3. Modelo ER (Base de Datos) -->
+  <section>
+    <h2>3) Modelo Entidad-Relación (Base de Datos)</h2>
+    <div class="mermaid">
+      erDiagram
+        USUARIO {
+          int ID PK
+          varchar NOMBRE
+          varchar EMAIL
+          varchar PASSWORD_HASH
+          varchar ROL
+        }
+        SERVICIO {
+          int ID PK
+          varchar NOMBRE
+          int DURACION_MIN
+          decimal PRECIO
+          bool ACTIVO
+        }
+        CITA {
+          int ID PK
+          int USUARIO_ID FK
+          int SERVICIO_ID FK
+          datetime FECHA
+          varchar ESTADO
+        }
+
+        USUARIO ||--o{ CITA : "agenda"
+        SERVICIO ||--o{ CITA : "se_solicita"
+    </div>
+  </section>
+
+  <!-- 4. Secuencia: Agendar Cita -->
+  <section>
+    <h2>4) Diagrama de Secuencia – Agendar Cita</h2>
+    <div class="mermaid">
+      sequenceDiagram
+        autonumber
+        actor Cliente
+        actor Admin as Administrador
+        participant Web as Web/App
+        participant API as API REST (PHP)
+        participant DB as MySQL
+
+        Cliente->>Web: Selecciona servicio + fecha/hora
+        Web->>API: POST /api/citas {datos}
+        API->>DB: INSERT CITA
+        DB-->>API: OK (idCita)
+        API-->>Web: 201 Created (JSON)
+        Web-->>Cliente: Confirmación + detalle de cita
+
+        Admin->>Web: Selecciona servicio + fecha/hora
+        Web->>API: POST /api/citas {datos}
+        API->>DB: INSERT CITA
+        DB-->>API: OK (idCita)
+        API-->>Web: 201 Created (JSON)
+        Web-->>Admin: Confirmación + detalle de cita
+    </div>
+  </section>
+
+  <!-- 5. Arquitectura/Despliegue (alto nivel) -->
+  <section>
+    <h2>5) Arquitectura y Despliegue (Alto Nivel)</h2>
+    <div class="mermaid">
+      graph LR
+        subgraph Cliente
+          U1[Web Browser]
+          U2[App Android]
+        end
+        subgraph Nube_DOM_Cloud
+          W1[PHP MVC (Vistas)]
+          A1[API REST (PHP)]
+          DB[(MySQL)]
+        end
+
+        U1 -->|HTTP(S)| W1
+        U1 -->|HTTP(S)/JSON| A1
+        U2 -->|HTTP(S)/JSON| A1
+        A1 --- DB
+        W1 --- DB
+
+        classDef box fill:#0ea5e9,stroke:#7dd3fc,color:#0b1220;
+        class W1,A1 box;
+        classDef storage fill:#fbbf24,stroke:#fde68a,color:#0b1220;
+        class DB storage;
+    </div>
+  </section>
+
+  <!-- 6. Proceso (BPMN-lite como flujo) -->
+  <section>
+    <h2>6) Proceso – Gestión de Citas (Flujo)</h2>
+    <div class="mermaid">
+      flowchart LR
+        S((Inicio)) --> L[Login / Registro]
+        L -->|Ok| Sel[Seleccionar Servicio]
+        Sel --> Cal[Elegir fecha y hora]
+        Cal --> Val[Validar disponibilidad]
+        Val -->|Disponible| Crear[Crear Cita]
+        Val -->|No disponible| Reprogramar[Reprogramar]
+        Crear --> Notif[Notificar cliente/admin]
+        Notif --> Fin((Fin))
+
+        classDef step fill:#1e293b,stroke:#334155,color:#e2e8f0;
+        class L,Sel,Cal,Val,Crear,Notif,Reprogramar step;
+    </div>
+  </section>
+
+  <!-- 7. Maquetación de Vistas (Wireframes simples) -->
+  <section>
+    <h2>7) Maquetación de Vistas (Wireframes simples)</h2>
+    <p class="hint">Abstracción de pantallas principales (login, dashboard, agenda).</p>
+    <div class="mermaid">
+      flowchart TB
+        subgraph Web
+          VW1[Login/Registro\n- Email\n- Password\n- Botón Entrar]
+          VW2[Dashboard Admin\n- KPIs\n- Tabla Servicios\n- Tabla Citas\n- Agendar cita]
+          VW3[Agenda Cliente\n- Lista Servicios\n- Calendario\n- Confirmación]
+        end
+
+        VW1 --> VW2
+        VW1 --> VW3
+        VW2 --> VW3
+    </div>
+  </section>
+
+</main>
+</body>
+</html>
