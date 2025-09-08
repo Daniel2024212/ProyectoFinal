@@ -26,8 +26,7 @@ include_once __DIR__ . '/../templates/barra.php';
             <div class="campo">
                 <label for="nombre">Nombre</label>
                 <label for="nombre_cliente">Nombre de la persona que tomará la cita:</label>
-                <input type="text" id="nombre_cliente" name="nombre_cliente" placeholder="Ej. Juan Pérez" required>
-                <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>" disabled>
+                <input type="text" id="nombre" name="nombre_cliente" placeholder="Ej. Juan Pérez" required>
             </div> <!-- .campo -->
 
             <div class="campo">
