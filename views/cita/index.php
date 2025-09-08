@@ -25,7 +25,7 @@
         <form class="formulario">
             <div class="campo">
                 <label for="nombre">Nombre</label>
-                <input id="nombre" type="text" placeholder="Tu Nombre" value="" disabled>
+                <input id="nombre" type="text" name="nombre_cliente" value="" required>
             </div> <!-- .campo -->
 
             <div class="campo">
