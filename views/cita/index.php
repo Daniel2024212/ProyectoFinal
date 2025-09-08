@@ -25,7 +25,7 @@
         <form class="formulario">
             <div class="campo">
                 <label for="nombre">Nombre</label>
-                <input id="nombre" type="text" placeholder="Tu Nombre" value="Ingresa tu nombre" required>
+                <input id="nombre" type="text" name="nombre" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>">
             </div> <!-- .campo -->
 
             <div class="campo">
