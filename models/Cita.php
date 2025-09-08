@@ -6,7 +6,7 @@ class Cita extends ActiveRecord {
 
     // Base de datos:
     protected static $tabla = 'citas';
-    protected static $columnasDB = ['id', 'fecha', 'hora', 'usuarioId'];
+    protected static $columnasDB = ['id', 'fecha', 'hora', 'nombre_cliente'];
 
     public $id;
     public $fecha;
