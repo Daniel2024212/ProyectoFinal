@@ -1,8 +1,8 @@
 <h1 class="nombre-pagina">Crear Nueva Cita</h1>
 <p class="descripcion-pagina">Elige tus servicios y coloca tus datos</p>
 
-<?php 
-    include_once __DIR__ . '/../templates/barra.php';
+<?php
+include_once __DIR__ . '/../templates/barra.php';
 ?>
 
 <div id="app">
@@ -25,6 +25,8 @@
         <form class="formulario">
             <div class="campo">
                 <label for="nombre">Nombre</label>
+                <label for="nombre_cliente">Nombre de la persona que tomará la cita:</label>
+                <input type="text" id="nombre_cliente" name="nombre_cliente" placeholder="Ej. Juan Pérez" required>
                 <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>" disabled>
             </div> <!-- .campo -->
 
@@ -54,8 +56,8 @@
 
 <div id="mapa" class="mapa"></div>
 
-<?php 
-    $script = "
+<?php
+$script = "
         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
         <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
         <script src='build/js/app.js'></script>
