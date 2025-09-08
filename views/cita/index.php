@@ -25,7 +25,7 @@
         <form class="formulario">
             <div class="campo">
                 <label for="nombre">Nombre</label>
-                <input id="nombre" type="text" name="nombre" placeholder="Tu Nombre" value="<?php echo isset($nombre) ? s($nombre) : ''; ?>">
+                <input id="nombre" type="text" name="nombre" placeholder="Tu Nombre">
             </div> <!-- .campo -->
 
             <div class="campo">
