@@ -26,9 +26,6 @@
             <div class="campo">
                 <label for="nombre">Nombre</label>
                 <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>" disabled>
-
-                <label for="nombre">Nombre del Cliente</label>
-                <input id="nombre" type="text" name="nombre" placeholder="Tu Nombre">
             </div> <!-- .campo -->
 
             <div class="campo">
