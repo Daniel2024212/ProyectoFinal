@@ -20,12 +20,12 @@
 
     <div id="paso-2" class="seccion">
         <h2>Tus Datos y Cita</h2>
-        <p class="text-center">Coloca tus datos y fehca de tu cita</p>
+        <p class="text-center">Coloca tus datos y fecha de tu cita</p>
 
         <form class="formulario">
             <div class="campo">
                 <label for="nombre">Nombre</label>
-                <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>" disabled>
+                <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>">
             </div> <!-- .campo -->
 
             <div class="campo">
@@ -43,7 +43,7 @@
 
     <div id="paso-3" class="seccion contenido-resumen">
         <h2>Resumen</h2>
-        <p class="text-center">Verifica que la información sea correacta</p>
+        <p class="text-center">Verifica que la información sea correcta</p>
     </div>
 
     <div class="paginacion">

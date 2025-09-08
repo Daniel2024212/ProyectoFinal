@@ -1,64 +1,49 @@
-<h1 class="nombre-pagina">Crear Nueva Cita</h1>
-<p class="descripcion-pagina">Elige tus servicios y coloca tus datos</p>
+<?php
 
-<?php 
-    include_once __DIR__ . '/../templates/barra.php';
-?>
+namespace Controllers;
 
-<div id="app">
-    <nav class="tabs">
-        <button class="actual" type="button" data-paso="1">Servicios</button>
-        <button type="button" data-paso="2">Información Cita</button>
-        <button type="button" data-paso="3">Resumen</button>
-    </nav>
+use Models\Cita;
+use Models\CitaServicio;
+use Models\Servicio;
 
-    <div id="paso-1" class="seccion">
-        <h2>Servicios</h2>
-        <p class="text-center">Elige tus servicios a continuación</p>
-        <div id="servicios" class="listado-servicios"></div>
-    </div>
+class APIController {
+    
+    public static function index() {
+        $servicios = Servicio::all();
+        echo json_encode($servicios);
+    }
 
-    <div id="paso-2" class="seccion">
-        <h2>Tus Datos y Cita</h2>
-        <p class="text-center">Coloca tus datos y fecha de tu cita</p>
+    public static function guardar() {
 
-        <form class="formulario">
-            <div class="campo">
-                <label for="nombre">Nombre</label>
-                <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>">
-            </div> <!-- .campo -->
+        // Almacena la cita y devuelve el ID:
+        $cita = new Cita($_POST);
+        $resultado = $cita->guardar();
 
-            <div class="campo">
-                <label for="fecha">Fecha</label>
-                <input id="fecha" type="date" min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>">
-            </div> <!-- .campo -->
+        $citaId = $resultado['id'];
 
-            <div class="campo">
-                <label for="hora">Hora</label>
-                <input id="hora" type="time">
-            </div> <!-- .campo -->
-            <input type="hidden" id="id" value="<?php echo $id; ?>">
-        </form>
-    </div>
+        // Almacena la cita y el servicio:
+        $idServicios = explode(',', $_POST['servicios']);
+        foreach($idServicios as $idServicio) {
+            $args = [
+                'citaId' => $citaId,
+                'servicioId' => $idServicio
+            ];
+            $citaServicio = new CitaServicio($args);
+            $citaServicio->guardar();
+        }
 
-    <div id="paso-3" class="seccion contenido-resumen">
-        <h2>Resumen</h2>
-        <p class="text-center">Verifica que la información sea correcta</p>
-    </div>
+        // Retornamos una respuesta:
+        echo json_encode(['resultado' => $resultado]);   
+    }
 
-    <div class="paginacion">
-        <button id="anterior" class="boton">&laquo; Anterior</button>
-        <button id="siguiente" class="boton">Siguiente &raquo;</button>
-    </div>
-</div>
+    public static function eliminar() {
+        if($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-<div id="mapa" class="mapa"></div>
+            $id = $_POST['id'];
+            $cita = Cita::find($id);
+            $cita->eliminar();
 
-<?php 
-    $script = "
-        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
-        <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
-        <script src='build/js/app.js'></script>
-        <script src='build/js/mapa.js'></script>
-    ";
-?>
+            header('Location: ' . $_SERVER['HTTP_REFERER']);
+        }
+    }
+}
