@@ -165,7 +165,7 @@ function idCliente() {
 }
 
 function nombreCliente() {
-    const nombre = document.querySelector('#nombre_cita').value;
+    const nombre = document.querySelector('#nombre_cliente').value;
     cita.nombre = nombre;
 }
 
