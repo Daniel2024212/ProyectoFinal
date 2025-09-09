@@ -307,22 +307,20 @@ function mostrarResumen() {
 }
 
 async function reservarCita() {
-    const {nombre, fecha, hora, servicios, id} = cita;
+    const {nombre, telefono, fecha, hora, servicios, usuarioId} = cita;
 
     const idServicios = servicios.map(servicio => servicio.id);
   
     const datos = new FormData();
+    datos.append('nombre', nombre);
+    datos.append('telefono', telefono);
     datos.append('fecha', fecha);
     datos.append('hora', hora);
-    datos.append('usuarioId', id);
+    datos.append('usuarioId', usuarioId);
     datos.append('servicios', idServicios);
 
-    // console.log([...datos]);
-    // return;
     try {
-        // Petición hacia la API:
         const url = `${location.origin}/api/citas`;
-
         const respuesta = await fetch(url, {
             method: 'POST',
             body: datos
@@ -332,19 +330,20 @@ async function reservarCita() {
         
         if(resultado.resultado) {
             Swal.fire({
-            icon: 'success',
-            title: 'Cita Creada',
-            text: 'Tu cita fue creada correctamente',
-            button: 'OK'
-            }).then(() => setTimeout(() => window.location.reload(), 3000));
+                icon: 'success',
+                title: 'Cita Creada',
+                text: 'Tu cita fue creada correctamente',
+                button: 'OK'
+            }).then(() => {
+                setTimeout(() => window.location.reload(), 3000);
+            });
         }
     } catch (error) {
         Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Hubo un error al guardar la cita',
-        button: 'OK'
+            icon: 'error',
+            title: 'Error',
+            text: 'Hubo un error al guardar la cita',
+            button: 'OK'
         });
     }
-    
 }
