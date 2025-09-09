@@ -176,7 +176,10 @@ function seleccionarFecha() {
         if([6, 0].includes(dia)) {
             e.target.value = '';
             mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
-        } else {
+        } else if (fechaSeleccionada < hoy){
+            e.target.value = '';
+            mostrarAlerta('Fecha no válida', 'error', '.formulario');
+        }else {
             cita.fecha = e.target.value;
         }
     });
