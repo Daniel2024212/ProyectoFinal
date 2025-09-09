@@ -172,39 +172,19 @@ function nombreCliente() {
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
 
-    // Establecer mínimo visualmente en el calendario
-    const hoyISO = new Date().toISOString().split('T')[0];
-    inputFecha.min = hoyISO;
+    // Bloquear escritura manual
+    inputFecha.addEventListener('keydown', function(e) {
+        e.preventDefault();
+    });
+
 
     inputFecha.addEventListener('input', function(e) {
-        const valor = e.target.value;
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
-            // Formato inválido
-            mostrarAlerta('⚠️ Formato de fecha inválido. Usa AAAA-MM-DD', 'error', '.formulario');
+        const dia = new Date(e.target.value).getUTCDay();
+        if([6, 0].includes(dia)) {
             e.target.value = '';
-            return;
-        }
-
-        const [año, mes, día] = valor.split('-').map(Number);
-        const fechaIngresada = new Date(año, mes - 1, día);
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0); // Normalizar hora
-
-        const añoActual = hoy.getFullYear();
-        const diaSemana = fechaIngresada.getDay(); // 0 = domingo, 6 = sábado
-
-        // Validaciones
-        if (año < añoActual) {
-            e.target.value = '';
-            mostrarAlerta(`⚠️ No se permiten fechas anteriores al año ${añoActual}`, 'error', '.formulario');
-        } else if (fechaIngresada < hoy) {
-            e.target.value = '';
-            mostrarAlerta('⚠️ No se permiten fechas pasadas', 'error', '.formulario');
-        } else if ([0, 6].includes(diaSemana)) {
-            e.target.value = '';
-            mostrarAlerta('⚠️ Fines de semana no permitidos', 'error', '.formulario');
+            mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
         } else {
-            cita.fecha = valor;
+            cita.fecha = e.target.value;
         }
     });
 }
