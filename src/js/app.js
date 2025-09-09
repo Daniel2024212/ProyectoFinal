@@ -212,7 +212,7 @@ function seleccionarHora() {
 
         if(hora < 10 || hora > 18) {
             e.target.value = '';
-            mostrarAlerta('Hora no válida', 'error', '.formulario');
+            mostrarAlerta('Hora no válida, hora valida de 10:00 am a 18:00', 'error', '.formulario');
         } else {
             cita.hora = horaCita;
         }
