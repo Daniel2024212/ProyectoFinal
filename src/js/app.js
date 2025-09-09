@@ -191,7 +191,7 @@ function seleccionarFecha() {
         // Validaciones
         if (añoIngresado < añoActual) {
             e.target.value = '';
-            mostrarAlerta(`No se permiten fechas anteriores al año ${añoActual}`, 'error', '.formulario');
+            mostrarAlerta('No se permiten fechas anteriores al año', 'error', '.formulario');
         } else if (fechaIngresada < hoy) {
             e.target.value = '';
             mostrarAlerta('No se permiten fechas pasadas', 'error', '.formulario');
