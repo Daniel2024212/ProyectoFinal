@@ -4,10 +4,8 @@ const pasoFinal = 3;
 const cita = {
     id: '',
     nombre: '',
-    telefono: '',
     fecha: '',
     hora: '',
-    usuarioId: '', // ID del usuario logueado
     servicios: []
 }
 
@@ -100,21 +98,6 @@ function paginaSiguiente() {
     const paginaSiguiente = document.querySelector('#siguiente');
 
     paginaSiguiente.addEventListener('click', function() {
-        if(paso === 2) {
-            // Validar los campos antes de avanzar
-            if(!nombreCliente()) {
-                return; // Detener si la validación falla
-            }
-            if(!cita.fecha) {
-                mostrarAlerta('Debes seleccionar una fecha', 'error', '.formulario');
-                return;
-            }
-            if(!cita.hora) {
-                mostrarAlerta('Debes seleccionar una hora', 'error', '.formulario');
-                return;
-            }
-        }
-        
         paso >= pasoFinal? paso = 3: paso++;
         botonesPaginador();
     });
@@ -178,27 +161,12 @@ function seleccionarServicio(servicio) {
 }
 
 function idCliente() {
-    cita.usuarioId = document.querySelector('#usuarioId').value;
+    cita.id  = document.querySelector('#id').value;
 }
 
 function nombreCliente() {
     const nombre = document.querySelector('#nombre').value;
-    const telefono = document.querySelector('#telefono').value;
-    
-    // Validaciones básicas
-    if(!nombre || nombre.trim() === '') {
-        mostrarAlerta('El nombre es obligatorio', 'error', '.formulario');
-        return false;
-    }
-    
-    if(!telefono || telefono.trim() === '') {
-        mostrarAlerta('El teléfono es obligatorio', 'error', '.formulario');
-        return false;
-    }
-    
-    cita.nombre = nombre.trim();
-    cita.telefono = telefono.trim();
-    return true;
+    cita.nombre = nombre;
 }
 
 function seleccionarFecha() {
@@ -263,28 +231,29 @@ function mostrarResumen() {
     }
 
     if(Object.values(cita).includes('') || cita.servicios.length === 0) {
-        mostrarAlerta('Faltan datos: servicio, nombre, teléfono, fecha u hora', 'error', '.contenido-resumen', false);
+        mostrarAlerta('Falta datos de servicio, fecha u hora', 'error', '.contenido-resumen', false);
         return;
     }
 
     // Formatear el div de resumen:
-    const {nombre, telefono, fecha, hora, servicios} = cita;
+    const {nombre, fecha, hora, servicios} = cita;
 
     // Heading para servicios en resumen:
     const headingServicios = document.createElement('H3');
     headingServicios.textContent = 'Resumen de Servicios';
     resumen.appendChild(headingServicios);
 
-    // Iterando y mostrando servicios
+    // Iterando y mostrando
     servicios.forEach(servicio => {
+        const {id, precio, nombre} = servicio;
         const contenedorServicio = document.createElement('DIV');
         contenedorServicio.classList.add('contenedor-servicio');
         
         const textServicio = document.createElement('P');
-        textServicio.textContent = servicio.nombre;
+        textServicio.textContent = nombre;
 
         const precioServicio = document.createElement('P');
-        precioServicio.innerHTML = `<span>Precio:</span> $${servicio.precio}`;
+        precioServicio.innerHTML = `<span>Precio:</span> $${precio}`;
 
         contenedorServicio.appendChild(textServicio);
         contenedorServicio.appendChild(precioServicio);
@@ -300,27 +269,51 @@ function mostrarResumen() {
     const nombreCliente = document.createElement('P');
     nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
 
-    const telefonoCliente = document.createElement('P');
-    telefonoCliente.innerHTML = `<span>Teléfono:</span> ${telefono}`;
+    // Formatear la fecha en español:
+    const fechaObj = new Date(fecha);
+    const mes = fechaObj.getMonth();
+    const dia = fechaObj.getDate() + 2;
+    const year = fechaObj.getFullYear();
 
-    // ... resto del código para fecha y hora
+    const fechaUTC = new Date(Date.UTC(year, mes, dia));
+    const opciones = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
+    const fechaFofechaUrmateada = fechaUTC.toLocaleDateString('es-MX', opciones);
+
+    const fechaCita = document.createElement('P');
+    fechaCita.innerHTML = `<span>Fecha:</span> ${fechaFofechaUrmateada}`;
+
+    const horaCita = document.createElement('P');
+    horaCita.innerHTML = `<span>Hora:</span> ${hora} Horas`;
+
+    // Boton para crear una cita:
+    const botonReservar = document.createElement('BUTTON');
+    botonReservar.classList.add('boton');
+    botonReservar.textContent = 'Reservar Cita';
+    botonReservar.onclick = reservarCita;
+
+    resumen.appendChild(nombreCliente);
+    resumen.appendChild(fechaCita);
+    resumen.appendChild(horaCita);
+    resumen.appendChild(botonReservar);
 }
 
 async function reservarCita() {
-    const {nombre, telefono, fecha, hora, servicios, usuarioId} = cita;
+    const {nombre, fecha, hora, servicios, id} = cita;
 
     const idServicios = servicios.map(servicio => servicio.id);
   
     const datos = new FormData();
-    datos.append('nombre', nombre);
-    datos.append('telefono', telefono);
     datos.append('fecha', fecha);
     datos.append('hora', hora);
-    datos.append('usuarioId', usuarioId);
+    datos.append('usuarioId', id);
     datos.append('servicios', idServicios);
 
+    // console.log([...datos]);
+    // return;
     try {
+        // Petición hacia la API:
         const url = `${location.origin}/api/citas`;
+
         const respuesta = await fetch(url, {
             method: 'POST',
             body: datos
@@ -330,20 +323,19 @@ async function reservarCita() {
         
         if(resultado.resultado) {
             Swal.fire({
-                icon: 'success',
-                title: 'Cita Creada',
-                text: 'Tu cita fue creada correctamente',
-                button: 'OK'
-            }).then(() => {
-                setTimeout(() => window.location.reload(), 3000);
-            });
+            icon: 'success',
+            title: 'Cita Creada',
+            text: 'Tu cita fue creada correctamente',
+            button: 'OK'
+            }).then(() => setTimeout(() => window.location.reload(), 3000));
         }
     } catch (error) {
         Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Hubo un error al guardar la cita',
-            button: 'OK'
+        icon: 'error',
+        title: 'Error',
+        text: 'Hubo un error al guardar la cita',
+        button: 'OK'
         });
     }
+    
 }
