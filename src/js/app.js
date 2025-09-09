@@ -172,14 +172,21 @@ function nombreCliente() {
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
     inputFecha.addEventListener('input', function(e) {
-        const dia = new Date(e.target.value).getUTCDay();
-        if([6, 0].includes(dia)) {
+        const fechaSeleccionada = new Date(e.target.value);
+        const hoy = new Date();
+        
+        // Normalizar la fecha de hoy (sin hora)
+        hoy.setHours(0, 0, 0, 0);
+
+        const dia = fechaSeleccionada.getUTCDay();
+
+        if ([6, 0].includes(dia)) {
             e.target.value = '';
             mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
-        } else if (fechaSeleccionada < hoy){
+        } else if (fechaSeleccionada < hoy) {
             e.target.value = '';
-            mostrarAlerta('Fecha no válida', 'error', '.formulario');
-        }else {
+            mostrarAlerta('No se permiten fechas pasadas', 'error', '.formulario');
+        } else {
             cita.fecha = e.target.value;
         }
     });
