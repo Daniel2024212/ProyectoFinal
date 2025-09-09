@@ -30,14 +30,14 @@
 
             <div class="campo">
                 <label for="fecha">Fecha</label>
-                <input id="fecha" type="date" min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" min="<?php echo date('Y-m-d'); ?>" max="<?php echo date('Y-m-d', strtotime('+365 month')); ?>">
+                <input id="fecha" type="date" min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>">
             </div> <!-- .campo -->
 
             <div class="campo">
                 <label for="hora">Hora</label>
                 <input id="hora" type="time">
             </div> <!-- .campo -->
-            <input type="hidden" id="id" value="<?php echo $id; ?>">
+            <input type="hidden" id="id" value="<?php echo $id; ?>"onkeydown="return false">
         </form>
     </div>
 
