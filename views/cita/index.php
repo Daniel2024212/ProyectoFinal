@@ -21,9 +21,9 @@
     <div id="paso-2" class="seccion">
         <h2>Tus Datos y Cita</h2>
         <p class="text-center">Coloca tus datos y fehca de tu cita</p>
+        <p>Horario de atención de 10 am a 18 pm</p>
 
         <form class="formulario">
-            <label for="Horario">Horario de 10 am a  18 pm</label>
             <div class="campo">
                 <label for="nombre">Nombre</label>
                 <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>" disabled>
