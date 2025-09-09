@@ -1,8 +1,8 @@
 <h1 class="nombre-pagina">Crear Nueva Cita</h1>
 <p class="descripcion-pagina">Elige tus servicios y coloca tus datos</p>
 
-<?php
-include_once __DIR__ . '/../templates/barra.php';
+<?php 
+    include_once __DIR__ . '/../templates/barra.php';
 ?>
 
 <div id="app">
@@ -20,12 +20,12 @@ include_once __DIR__ . '/../templates/barra.php';
 
     <div id="paso-2" class="seccion">
         <h2>Tus Datos y Cita</h2>
-        <p class="text-center">Coloca tus datos y fecha de tu cita</p>
+        <p class="text-center">Coloca tus datos y fehca de tu cita</p>
 
         <form class="formulario">
             <div class="campo">
-                <label for="nombre_cita">Nombre de la Cita</label>
-                <input id="nombre_cliente" type="text" placeholder="Ingrese su nombre: " value="">
+                <label for="nombre">Nombre</label>
+                <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>" disabled>
             </div> <!-- .campo -->
 
             <div class="campo">
@@ -43,7 +43,7 @@ include_once __DIR__ . '/../templates/barra.php';
 
     <div id="paso-3" class="seccion contenido-resumen">
         <h2>Resumen</h2>
-        <p class="text-center">Verifica que la información sea correcta</p>
+        <p class="text-center">Verifica que la información sea correacta</p>
     </div>
 
     <div class="paginacion">
@@ -54,8 +54,8 @@ include_once __DIR__ . '/../templates/barra.php';
 
 <div id="mapa" class="mapa"></div>
 
-<?php
-$script = "
+<?php 
+    $script = "
         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
         <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
         <script src='build/js/app.js'></script>
