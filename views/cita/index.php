@@ -21,7 +21,7 @@
     <div id="paso-2" class="seccion">
         <h2>Tus Datos y Cita</h2>
         <p class="text-center">Coloca tus datos y fehca de tu cita</p>
-        <p>Horario de atención de 10 am a 18 pm</p>
+        <p class="text-center">Horario de atención de 10 am a 18 pm</p>
 
         <form class="formulario">
             <div class="campo">
