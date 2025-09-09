@@ -172,7 +172,7 @@ function nombreCliente() {
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
 
-    // Establecer mínimo visualmente en el input
+    // Establecer mínimo visualmente en el calendario
     const hoyISO = new Date().toISOString().split('T')[0];
     inputFecha.min = hoyISO;
 
@@ -191,13 +191,13 @@ function seleccionarFecha() {
         // Validaciones
         if (añoIngresado < añoActual) {
             e.target.value = '';
-            mostrarAlerta(`No se permiten fechas anteriores al año ${añoActual}`, 'error', '.formulario');
+            mostrarAlerta(`⚠️ No se permiten fechas anteriores al año ${añoActual}`, 'error', '.formulario');
         } else if (fechaIngresada < hoy) {
             e.target.value = '';
-            mostrarAlerta('No se permiten fechas pasadas', 'error', '.formulario');
+            mostrarAlerta('⚠️ No se permiten fechas pasadas', 'error', '.formulario');
         } else if ([6, 0].includes(diaSemana)) {
             e.target.value = '';
-            mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
+            mostrarAlerta('⚠️ Fines de semana no permitidos', 'error', '.formulario');
         } else {
             cita.fecha = valor;
         }
