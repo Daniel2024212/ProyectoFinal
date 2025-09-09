@@ -178,31 +178,36 @@ function seleccionarFecha() {
 
     inputFecha.addEventListener('input', function(e) {
         const valor = e.target.value;
-        if (!valor) return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+            // Formato inválido
+            mostrarAlerta('⚠️ Formato de fecha inválido. Usa AAAA-MM-DD', 'error', '.formulario');
+            e.target.value = '';
+            return;
+        }
 
-        const fechaIngresada = new Date(valor);
+        const [año, mes, día] = valor.split('-').map(Number);
+        const fechaIngresada = new Date(año, mes - 1, día);
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0); // Normalizar hora
 
         const añoActual = hoy.getFullYear();
-        const añoIngresado = fechaIngresada.getFullYear();
-        const diaSemana = fechaIngresada.getUTCDay();
+        const diaSemana = fechaIngresada.getDay(); // 0 = domingo, 6 = sábado
 
         // Validaciones
-        if (añoIngresado < añoActual) {
+        if (año < añoActual) {
             e.target.value = '';
             mostrarAlerta(`⚠️ No se permiten fechas anteriores al año ${añoActual}`, 'error', '.formulario');
         } else if (fechaIngresada < hoy) {
             e.target.value = '';
             mostrarAlerta('⚠️ No se permiten fechas pasadas', 'error', '.formulario');
-        } else if ([6, 0].includes(diaSemana)) {
+        } else if ([0, 6].includes(diaSemana)) {
             e.target.value = '';
             mostrarAlerta('⚠️ Fines de semana no permitidos', 'error', '.formulario');
         } else {
             cita.fecha = valor;
         }
     });
-}}
+}
 
 function seleccionarHora() {
     const inputHora = document.querySelector('#hora');
