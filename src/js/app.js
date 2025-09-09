@@ -171,16 +171,38 @@ function nombreCliente() {
 
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
+
+    // Establecer mínimo visualmente en el calendario
+    const hoyISO = new Date().toISOString().split('T')[0];
+    inputFecha.min = hoyISO;
+
     inputFecha.addEventListener('input', function(e) {
-        const dia = new Date(e.target.value).getUTCDay();
-        if([6, 0].includes(dia)) {
+        const valor = e.target.value;
+        if (!valor) return;
+
+        const fechaIngresada = new Date(valor);
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0); // Normalizar hora
+
+        const añoActual = hoy.getFullYear();
+        const añoIngresado = fechaIngresada.getFullYear();
+        const diaSemana = fechaIngresada.getUTCDay();
+
+        // Validaciones
+        if (añoIngresado < añoActual) {
             e.target.value = '';
-            mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
+            mostrarAlerta(`⚠️ No se permiten fechas anteriores al año ${añoActual}`, 'error', '.formulario');
+        } else if (fechaIngresada < hoy) {
+            e.target.value = '';
+            mostrarAlerta('⚠️ No se permiten fechas pasadas', 'error', '.formulario');
+        } else if ([6, 0].includes(diaSemana)) {
+            e.target.value = '';
+            mostrarAlerta('⚠️ Fines de semana no permitidos', 'error', '.formulario');
         } else {
-            cita.fecha = e.target.value;
+            cita.fecha = valor;
         }
     });
-}
+}}
 
 function seleccionarHora() {
     const inputHora = document.querySelector('#hora');
