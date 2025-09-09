@@ -165,7 +165,7 @@ function idCliente() {
 }
 
 function nombreCliente() {
-    const nombre = document.querySelector('#nombre_cliente').value;
+    const nombre = document.querySelector('#nombre').value;
     cita.nombre = nombre;
 }
 
@@ -305,7 +305,7 @@ async function reservarCita() {
     const datos = new FormData();
     datos.append('fecha', fecha);
     datos.append('hora', hora);
-    datos.append('nombre_cliente', id);
+    datos.append('usuarioId', id);
     datos.append('servicios', idServicios);
 
     // console.log([...datos]);
