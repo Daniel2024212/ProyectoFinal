@@ -23,6 +23,7 @@
         <p class="text-center">Coloca tus datos y fehca de tu cita</p>
 
         <form class="formulario">
+            <label for="Horario">Horario de 10 am a  18 pm</label>
             <div class="campo">
                 <label for="nombre">Nombre</label>
                 <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>" disabled>
