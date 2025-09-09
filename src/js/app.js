@@ -171,35 +171,13 @@ function nombreCliente() {
 
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
-
-    // Establecer mínimo visualmente en el input
-    const hoyISO = new Date().toISOString().split('T')[0];
-    inputFecha.min = hoyISO;
-
     inputFecha.addEventListener('input', function(e) {
-        const valor = e.target.value;
-        if (!valor) return;
-
-        const fechaIngresada = new Date(valor);
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0); // Normalizar hora
-
-        const añoActual = hoy.getFullYear();
-        const añoIngresado = fechaIngresada.getFullYear();
-        const diaSemana = fechaIngresada.getUTCDay();
-
-        // Validaciones
-        if (añoIngresado < añoActual) {
-            e.target.value = '';
-            mostrarAlerta('No se permiten fechas anteriores al año', 'error', '.formulario');
-        } else if (fechaIngresada < hoy) {
-            e.target.value = '';
-            mostrarAlerta('No se permiten fechas pasadas', 'error', '.formulario');
-        } else if ([6, 0].includes(diaSemana)) {
+        const dia = new Date(e.target.value).getUTCDay();
+        if([6, 0].includes(dia)) {
             e.target.value = '';
             mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
         } else {
-            cita.fecha = valor;
+            cita.fecha = e.target.value;
         }
     });
 }
@@ -212,7 +190,7 @@ function seleccionarHora() {
 
         if(hora < 10 || hora > 18) {
             e.target.value = '';
-            mostrarAlerta('Hora no válida, hora valida de 10:00 am a 18:00', 'error', '.formulario');
+            mostrarAlerta('Hora no válida', 'error', '.formulario');
         } else {
             cita.hora = horaCita;
         }
