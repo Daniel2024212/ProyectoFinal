@@ -299,8 +299,12 @@ function mostrarResumen() {
     hCita.textContent = 'Resumen de Cita';
     resumen.appendChild(hCita);
 
-    const pNombre = document.createElement('P');
-    pNombre.innerHTML = `<span>Nombre:</span> ${nombre}`;
+    const inputNombre = document.createElement('INPUT');
+    inputNombre.type = 'text';
+    inputNombre.placeholder = 'Ingresa tu nombre';
+    inputNombre.classList.add('input-nombre');
+    inputNombre.value = cita.nombre || '';
+    resumen.appendChild(inputNombre);
 
     const fechaObj = new Date(fecha);
     const fechaStr = fechaObj.toLocaleDateString('es-MX',
@@ -322,7 +326,7 @@ function mostrarResumen() {
     btn.textContent = 'Confirmar Cita';
     btn.onclick = reservarCita;
 
-    resumen.append(pNombre, pFecha, pHora, hPago, pPago, btn);
+    resumen.append(inputNombre, pFecha, pHora, hPago, pPago, btn);
 }
 
 /***********************
