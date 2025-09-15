@@ -190,7 +190,7 @@ function seleccionarHora() {
 }
 
 /***********************
- * PAGO – PASO 2      *
+ * PAGO – PASO 3
  **********************/
 function manejarPago() {
     const btn = document.getElementById('btn-pagar');
@@ -202,7 +202,7 @@ function manejarPago() {
             return;
         }
 
-        // calcular total
+        // calcular total y método
         const total = cita.servicios.reduce((acc, s) => acc + Number(s.precio), 0);
         const metodo = document.getElementById('pago-metodo').value;
 
@@ -211,7 +211,7 @@ function manejarPago() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    cita_id: 0,             // la cita se crea al final
+                    cita_id: 0,
                     usuario_id: cita.id,
                     monto: total,
                     metodo: metodo
@@ -225,17 +225,20 @@ function manejarPago() {
                 : 'Error en el pago';
 
             if (json.success) {
-                servicio.pago = {
-                    metodo: metodo,
+                // almacenar toda la info en servicio.precio
+                servicio.precio = {
+                    metodo,
                     monto: total,
-                    referencia: json.referencia || json.pago_id
+                    referencia: json.referencia || json.pago_id,
+                    estado: 'pagado',
+                    fecha: new Date().toISOString()
                 };
-                // avanzar al paso 3
+
                 paso = 3;
                 botonesPaginador();
             }
         } catch (err) {
-            mostrarAlerta('Error de conexión al pagar', 'error', '#paso-2', false);
+            mostrarAlerta('Error de conexión al pagar', 'error', '#paso-3', false);
         }
     });
 }
