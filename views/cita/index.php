@@ -9,7 +9,7 @@ include_once __DIR__ . '/../templates/barra.php';
     <nav class="tabs">
         <button class="actual" type="button" data-paso="1">Servicios</button>
         <button type="button" data-paso="2">Información Cita</button>
-        <button type="button">Pagos</button>
+        <button type="button" data-paso="3">Pagos</button>
         <button type="button" data-paso="4">Resumen</button>
     </nav>
 
