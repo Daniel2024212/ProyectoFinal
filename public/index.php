@@ -41,6 +41,12 @@ $router->get('/api/servicios', [APIController::class, 'index']);
 $router->post('/api/citas', [APIController::class, 'guardar']);
 $router->post('/api/eliminar', [APIController::class, 'eliminar']);
 
+$router->post('/api/valoraciones/crear', [ValoracionesController::class, 'crear']);
+$router->get('/api/valoraciones', [ValoracionesController::class, 'listar']);
+
+$router->post('/api/pagos/crear', [PagosController::class, 'crear']);
+$router->get('/api/pagos', [PagosController::class, 'listar']);
+
 // CRUD de servicios:
 $router->get('/servicios', [ServicioController::class, 'index']);
 $router->get('/servicios/crear', [ServicioController::class, 'crear']);
@@ -48,11 +54,6 @@ $router->post('/servicios/crear', [ServicioController::class, 'crear']);
 $router->get('/servicios/actualizar', [ServicioController::class, 'actualizar']);
 $router->post('/servicios/actualizar', [ServicioController::class, 'actualizar']);
 $router->post('/servicios/eliminar', [ServicioController::class, 'eliminar']);
-$router->post('/api/valoraciones/crear', [ValoracionesController::class, 'crear']);
-$router->get('/api/valoraciones', [ValoracionesController::class, 'listar']);
-
-$router->post('/api/pagos/crear', [PagosController::class, 'crear']);
-$router->get('/api/pagos', [PagosController::class, 'listar']);
 
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
