@@ -11,6 +11,7 @@ include_once __DIR__ . '/../templates/barra.php';
         <button type="button" data-paso="2">Información Cita</button>
         <button type="button" data-paso="3">Pagos</button>
         <button type="button" data-paso="4">Resumen</button>
+        <button type="button" data-paso="5">Valoración</button>
     </nav>
 
     <div id="paso-1" class="seccion">
@@ -43,23 +44,31 @@ include_once __DIR__ . '/../templates/barra.php';
         </form>
     </div>
 
-    <div id="paso-3" class="seccion ocultar">
+    <div id="paso-3" class="seccion">
         <form id="form-pago">
             <label>Monto a pagar
                 <input type="number" step="0.01" id="pago-monto" readonly>
             </label>
+
             <label>Método de pago
-                <select id="pago-metodo">
-                    <option value="tarjeta_simulada">Tarjeta simulada</option>
-                    <!-- aquí puedes añadir más métodos (Stripe/PayPal) -->
+                <select id="pago-metodo" required>
+                    <option value="tarjeta">Tarjeta</option>
+                    <option value="efectivo">Efectivo</option>
                 </select>
             </label>
-            <button type="button" id="btn-pagar">Realizar Pago</button>
+
+            <button type="button" id="btn-pagar" class="boton">Realizar Pago</button>
             <p id="pago-resultado" class="mensaje"></p>
         </form>
     </div>
 
+
     <div id="paso-4" class="seccion contenido-resumen">
+        <h2>Resumen</h2>
+        <p class="text-center">Verifica que la información sea correacta</p>
+    </div>
+
+    <div id="paso-5" class="seccion">
         <h2>Resumen</h2>
         <p class="text-center">Verifica que la información sea correacta</p>
     </div>
