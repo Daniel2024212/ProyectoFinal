@@ -3,7 +3,7 @@
  **********************/
 let paso = 1;
 const pasoInicial = 1;
-const pasoFinal = 4;   // ahora son 4 pasos
+const pasoFinal   = 4;   // ahora son 4 pasos
 
 const cita = {
     id: '',
@@ -265,16 +265,19 @@ function mostrarResumen() {
     const resumen = document.querySelector('.contenido-resumen');
     while (resumen.firstChild) resumen.removeChild(resumen.firstChild);
 
+    const inputNombre = document.getElementById('nombre');
+    const nombre = inputNombre?.value.trim();
+    const { fecha, hora, servicios, pago } = cita;
+
     if (
+        !nombre ||
         Object.values(cita).includes('') ||
-        cita.servicios.length === 0 ||
-        !cita.pago.referencia
+        servicios.length === 0 ||
+        !pago.referencia
     ) {
-        mostrarAlerta('Faltan datos de servicio, pago, fecha u hora', 'error', '.contenido-resumen', false);
+        mostrarAlerta('Faltan datos de nombre, servicio, pago, fecha u hora', 'error', '.contenido-resumen', false);
         return;
     }
-
-    const { nombre, fecha, hora, servicios, pago } = cita;
 
     const hServicios = document.createElement('H3');
     hServicios.textContent = 'Resumen de Servicios';
@@ -299,19 +302,13 @@ function mostrarResumen() {
     hCita.textContent = 'Resumen de Cita';
     resumen.appendChild(hCita);
 
-    // Crear el elemento donde se mostrará el nombre
-    const pNombre = document.createElement('p');
-    document.body.appendChild(pNombre); // Puedes cambiar la ubicación si lo deseas
-
-    // Detectar cambios en el input y actualizar el contenido
-    const inputNombre = document.getElementById('nombre');
-    inputNombre.addEventListener('input', () => {
-        pNombre.innerHTML = `<span>Nombre:</span> ${inputNombre.value}`;
-    });
+    const pNombre = document.createElement('P');
+    pNombre.innerHTML = `<span>Nombre:</span> ${nombre}`;
 
     const fechaObj = new Date(fecha);
-    const fechaStr = fechaObj.toLocaleDateString('es-MX',
-        { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const fechaStr = fechaObj.toLocaleDateString('es-MX', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
 
     const pFecha = document.createElement('P');
     pFecha.innerHTML = `<span>Fecha:</span> ${fechaStr}`;
