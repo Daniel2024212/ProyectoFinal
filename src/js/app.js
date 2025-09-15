@@ -299,13 +299,12 @@ function mostrarResumen() {
     hCita.textContent = 'Resumen de Cita';
     resumen.appendChild(hCita);
 
-    const inputNombre = document.createElement('INPUT');
-    inputNombre.type = 'text';
-    inputNombre.placeholder = 'Ingresa tu nombre';
-    inputNombre.classList.add('input-nombre');
-    inputNombre.value = cita.nombre || '';
-    resumen.appendChild(inputNombre);
-
+    const pNombre = document.createElement('INPUT');
+    pNombre.type = 'text';
+    pNombre.placeholder = 'Ingresa tu nombre';
+    pNombre.classList.add('input-nombre');
+    pNombre.value = cita.nombre || '';
+    
     const fechaObj = new Date(fecha);
     const fechaStr = fechaObj.toLocaleDateString('es-MX',
         { weekday:'long', year:'numeric', month:'long', day:'numeric' });
@@ -326,7 +325,7 @@ function mostrarResumen() {
     btn.textContent = 'Confirmar Cita';
     btn.onclick = reservarCita;
 
-    resumen.append(inputNombre, pFecha, pHora, hPago, pPago, btn);
+    resumen.append(pNombre, pFecha, pHora, hPago, pPago, btn);
 }
 
 /***********************
