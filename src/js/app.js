@@ -265,20 +265,19 @@ function mostrarResumen() {
     const resumen = document.querySelector('.contenido-resumen');
     while (resumen.firstChild) resumen.removeChild(resumen.firstChild);
 
-    const inputNombre = document.getElementById('nombre');
-    const nombre = inputNombre?.value.trim();
-    const { fecha, hora, servicios, pago } = cita;
-
+    // Validación previa
     if (
-        !nombre ||
         Object.values(cita).includes('') ||
-        servicios.length === 0 ||
-        !pago.referencia
+        cita.servicios.length === 0 ||
+        !cita.pago.referencia
     ) {
-        mostrarAlerta('Faltan datos de nombre, servicio, pago, fecha u hora', 'error', '.contenido-resumen', false);
+        mostrarAlerta('Faltan datos de servicio, pago, fecha u hora', 'error', '.contenido-resumen', false);
         return;
     }
 
+    const { fecha, hora, servicios, pago } = cita;
+
+    // Título de servicios
     const hServicios = document.createElement('H3');
     hServicios.textContent = 'Resumen de Servicios';
     resumen.appendChild(hServicios);
@@ -298,13 +297,20 @@ function mostrarResumen() {
         resumen.appendChild(cont);
     });
 
+    // Título de cita
     const hCita = document.createElement('H3');
     hCita.textContent = 'Resumen de Cita';
     resumen.appendChild(hCita);
 
-    const pNombre = document.createElement('P');
-    pNombre.innerHTML = `<span>Nombre:</span> ${nombre}`;
+    // Campo para ingresar nombre
+    const inputNombre = document.createElement('INPUT');
+    inputNombre.type = 'text';
+    inputNombre.placeholder = 'Ingresa tu nombre';
+    inputNombre.classList.add('input-nombre');
+    inputNombre.value = cita.nombre || '';
+    resumen.appendChild(inputNombre);
 
+    // Fecha y hora
     const fechaObj = new Date(fecha);
     const fechaStr = fechaObj.toLocaleDateString('es-MX', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -316,17 +322,37 @@ function mostrarResumen() {
     const pHora = document.createElement('P');
     pHora.innerHTML = `<span>Hora:</span> ${hora} hrs`;
 
+    resumen.appendChild(pFecha);
+    resumen.appendChild(pHora);
+
+    // Sección de pago
     const hPago = document.createElement('H3');
     hPago.textContent = 'Pago';
+
     const pPago = document.createElement('P');
     pPago.innerHTML = `<span>Método:</span> ${pago.metodo} — <span>Monto:</span> $${pago.monto}`;
 
+    resumen.appendChild(hPago);
+    resumen.appendChild(pPago);
+
+    // Botón para confirmar cita
     const btn = document.createElement('BUTTON');
     btn.classList.add('boton');
     btn.textContent = 'Confirmar Cita';
-    btn.onclick = reservarCita;
 
-    resumen.append(pNombre, pFecha, pHora, hPago, pPago, btn);
+    btn.onclick = () => {
+        // Guardar nombre ingresado en el objeto cita
+        cita.nombre = inputNombre.value.trim();
+
+        if (!cita.nombre) {
+            mostrarAlerta('Debes ingresar tu nombre antes de confirmar', 'error', '.contenido-resumen', false);
+            return;
+        }
+
+        reservarCita(); // Aquí se envía todo el objeto cita incluyendo el nombre
+    };
+
+    resumen.appendChild(btn);
 }
 
 /***********************
