@@ -3,7 +3,7 @@
  **********************/
 let paso = 1;
 const pasoInicial = 1;
-const pasoFinal   = 4;   // ahora son 4 pasos
+const pasoFinal = 4;   // ahora son 4 pasos
 
 const cita = {
     id: '',
@@ -190,7 +190,7 @@ function seleccionarHora() {
 }
 
 /***********************
- * PAGO – PASO 3
+ * PAGO – PASO 3      *
  **********************/
 function manejarPago() {
     const btn = document.getElementById('btn-pagar');
@@ -198,11 +198,11 @@ function manejarPago() {
 
     btn.addEventListener('click', async () => {
         if (cita.servicios.length === 0) {
-            mostrarAlerta('Selecciona al menos un servicio antes de pagar', 'error', '#paso-2', false);
+            mostrarAlerta('Selecciona al menos un servicio antes de pagar', 'error', '#paso-3', false);
             return;
         }
 
-        // calcular total y método
+        // calcular total
         const total = cita.servicios.reduce((acc, s) => acc + Number(s.precio), 0);
         const metodo = document.getElementById('pago-metodo').value;
 
@@ -211,7 +211,7 @@ function manejarPago() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    cita_id: 0,
+                    cita_id: 0,             // la cita se crea al final
                     usuario_id: cita.id,
                     monto: total,
                     metodo: metodo
@@ -225,15 +225,12 @@ function manejarPago() {
                 : 'Error en el pago';
 
             if (json.success) {
-                // almacenar toda la info en servicio.precio
-                servicio.precio = {
-                    metodo,
+                cita.pago = {
+                    metodo: metodo,
                     monto: total,
-                    referencia: json.referencia || json.pago_id,
-                    estado: 'pagado',
-                    fecha: new Date().toISOString()
+                    referencia: json.referencia || json.pago_id
                 };
-
+                // avanzar al paso 3
                 paso = 3;
                 botonesPaginador();
             }
@@ -302,12 +299,19 @@ function mostrarResumen() {
     hCita.textContent = 'Resumen de Cita';
     resumen.appendChild(hCita);
 
-    const pNombre = document.createElement('P');
-    pNombre.innerHTML = `<span>Nombre:</span> ${nombre}`;
+    // Crear el elemento donde se mostrará el nombre
+    const pNombre = document.createElement('p');
+    document.body.appendChild(pNombre); // Puedes cambiar la ubicación si lo deseas
+
+    // Detectar cambios en el input y actualizar el contenido
+    const inputNombre = document.getElementById('nombre');
+    inputNombre.addEventListener('input', () => {
+        pNombre.innerHTML = `<span>Nombre:</span> ${inputNombre.value}`;
+    });
 
     const fechaObj = new Date(fecha);
     const fechaStr = fechaObj.toLocaleDateString('es-MX',
-        { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+        { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     const pFecha = document.createElement('P');
     pFecha.innerHTML = `<span>Fecha:</span> ${fechaStr}`;
