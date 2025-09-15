@@ -45,9 +45,10 @@ include_once __DIR__ . '/../templates/barra.php';
     </div>
 
     <div id="paso-3" class="seccion">
+        <h1>Pagos</h1>
         <form id="form-pago">
             <label>Monto a pagar
-                <input type="number" step="0.01" id="pago-monto" readonly>
+                <input type="number" step="0.01" id="pago-monto" value="<?php echo s($precio); ?>" readonly>
             </label>
 
             <label>Método de pago
