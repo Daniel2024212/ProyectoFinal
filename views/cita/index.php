@@ -1,8 +1,8 @@
 <h1 class="nombre-pagina">Crear Nueva Cita</h1>
 <p class="descripcion-pagina">Elige tus servicios y coloca tus datos</p>
 
-<?php 
-    include_once __DIR__ . '/../templates/barra.php';
+<?php
+include_once __DIR__ . '/../templates/barra.php';
 ?>
 
 <div id="app">
@@ -26,7 +26,7 @@
         <form class="formulario">
             <div class="campo">
                 <label for="nombre">Nombre</label>
-                <input id="nombre" type="text" placeholder="Tu Nombre">
+                <input id="nombre" type="text" name="nombre" placeholder="Tu Nombre" autocomplete="off">
             </div> <!-- .campo -->
 
             <div class="campo">
@@ -38,7 +38,7 @@
                 <label for="hora">Hora</label>
                 <input id="hora" type="time">
             </div> <!-- .campo -->
-            <input type="hidden" id="id" value="<?php echo $id; ?>"onkeydown="return false">
+            <input type="hidden" id="id" value="<?php echo $id; ?>" onkeydown="return false">
         </form>
     </div>
 
@@ -55,8 +55,8 @@
 
 <div id="mapa" class="mapa"></div>
 
-<?php 
-    $script = "
+<?php
+$script = "
         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
         <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
         <script src='build/js/app.js'></script>
