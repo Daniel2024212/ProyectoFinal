@@ -300,7 +300,7 @@ function mostrarResumen() {
     resumen.appendChild(hCita);
 
     const pNombre = document.createElement('P');
-    pNombre.innerHTML = `<span>Nombre:</span> `;
+    pNombre.innerHTML = `<span>Nombre:</span> ${nombre}`;
 
     const fechaObj = new Date(fecha);
     const fechaStr = fechaObj.toLocaleDateString('es-MX',
