@@ -1,15 +1,16 @@
 <h1 class="nombre-pagina">Crear Nueva Cita</h1>
 <p class="descripcion-pagina">Elige tus servicios y coloca tus datos</p>
 
-<?php 
-    include_once __DIR__ . '/../templates/barra.php';
+<?php
+include_once __DIR__ . '/../templates/barra.php';
 ?>
 
 <div id="app">
     <nav class="tabs">
         <button class="actual" type="button" data-paso="1">Servicios</button>
         <button type="button" data-paso="2">Información Cita</button>
-        <button type="button" data-paso="3">Resumen</button>
+        <button type="button">Pagos</button>
+        <button type="button" data-paso="4">Resumen</button>
     </nav>
 
     <div id="paso-1" class="seccion">
@@ -38,11 +39,27 @@
                 <label for="hora">Hora</label>
                 <input id="hora" type="time">
             </div> <!-- .campo -->
-            <input type="hidden" id="id" value="<?php echo $id; ?>"onkeydown="return false">
+            <input type="hidden" id="id" value="<?php echo $id; ?>" onkeydown="return false">
         </form>
     </div>
 
-    <div id="paso-3" class="seccion contenido-resumen">
+    <div id="paso-3" class="seccion ocultar">
+        <form id="form-pago">
+            <label>Monto a pagar
+                <input type="number" step="0.01" id="pago-monto" readonly>
+            </label>
+            <label>Método de pago
+                <select id="pago-metodo">
+                    <option value="tarjeta_simulada">Tarjeta simulada</option>
+                    <!-- aquí puedes añadir más métodos (Stripe/PayPal) -->
+                </select>
+            </label>
+            <button type="button" id="btn-pagar">Realizar Pago</button>
+            <p id="pago-resultado" class="mensaje"></p>
+        </form>
+    </div>
+
+    <div id="paso-4" class="seccion contenido-resumen">
         <h2>Resumen</h2>
         <p class="text-center">Verifica que la información sea correacta</p>
     </div>
@@ -55,8 +72,8 @@
 
 <div id="mapa" class="mapa"></div>
 
-<?php 
-    $script = "
+<?php
+$script = "
         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
         <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
         <script src='build/js/app.js'></script>
