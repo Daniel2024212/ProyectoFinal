@@ -3,7 +3,7 @@
  **********************/
 let paso = 1;
 const pasoInicial = 1;
-const pasoFinal   = 4;   // ahora son 4 pasos
+const pasoFinal = 4;   // ahora son 4 pasos
 
 const cita = {
     id: '',
@@ -299,15 +299,27 @@ function mostrarResumen() {
     hCita.textContent = 'Resumen de Cita';
     resumen.appendChild(hCita);
 
-    const pNombre = document.createElement('INPUT');
-    pNombre.type = 'text';
-    pNombre.placeholder = 'Ingresa tu nombre';
-    pNombre.classList.add('input-nombre');
-    pNombre.value = cita.nombre || '';
-    
+    const inputNombre = document.getElementById('nombre');
+
+    // Verifica si ya existe un párrafo antes de crear uno nuevo
+    inputNombre.addEventListener('input', () => {
+        const nombre = inputNombre.value.trim();
+
+        // Buscar si ya existe un <p> generado
+        let pExistente = document.querySelector('p[data-generado="true"]');
+
+        if (!pExistente) {
+            pExistente = document.createElement('p');
+            pExistente.setAttribute('data-generado', 'true');
+            document.body.appendChild(pExistente);
+        }
+
+        pExistente.innerHTML = `<span>Nombre:</span> ${nombre}`;
+    });
+
     const fechaObj = new Date(fecha);
     const fechaStr = fechaObj.toLocaleDateString('es-MX',
-        { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+        { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     const pFecha = document.createElement('P');
     pFecha.innerHTML = `<span>Fecha:</span> ${fechaStr}`;
