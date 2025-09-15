@@ -225,7 +225,7 @@ function manejarPago() {
                 : 'Error en el pago';
 
             if (json.success) {
-                cita.pago = {
+                servicio.pago = {
                     metodo: metodo,
                     monto: total,
                     referencia: json.referencia || json.pago_id
