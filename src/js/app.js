@@ -273,36 +273,16 @@ function mostrarResumen() {
     headingCita.textContent = 'Resumen de Cita';
     resumen.appendChild(headingCita);
 
-    // JavaScript
     const inputNombre = document.getElementById('inputNombre');
     const botonGuardar = document.getElementById('guardarNombre');
     const contenedor = document.getElementById('contenedorCliente');
 
-    // Mostrar nombre guardado al cargar la página
-    window.addEventListener('DOMContentLoaded', () => {
-        const nombreGuardado = localStorage.getItem('nombreCliente');
-        if (nombreGuardado) {
-            mostrarNombre(nombreGuardado);
-        }
-    });
-
-    // Guardar nombre al hacer clic
     botonGuardar.addEventListener('click', () => {
-        const nombre = inputNombre.value.trim();
-        if (nombre !== '') {
-            localStorage.setItem('nombreCliente', nombre);
-            mostrarNombre(nombre);
-        }
-    });
-
-    // Función para mostrar el nombre
-    function mostrarNombre(nombre) {
-        contenedor.innerHTML = ''; // Limpiar contenido previo
         const nombreCliente = document.createElement('p');
-        nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
-        nombreCliente.classList.add('dato-cliente');
+        nombreCliente.innerHTML = '<span>Nombre:</span> ' + inputNombre.value;
+        contenedor.innerHTML = ''; // Limpia contenido previo
         contenedor.appendChild(nombreCliente);
-    }
+    });
 
     // Formatear la fecha en español:
     const fechaObj = new Date(fecha);
