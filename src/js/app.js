@@ -279,10 +279,8 @@ function mostrarResumen() {
     headingCita.textContent = 'Resumen de Cita';
     resumen.appendChild(headingCita);
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const nombreCliente = document.getElementById('nombre').value;
-        console.log(nombreCliente);
-    });
+    const nombreCliente = document.getElementById('nombre');
+    nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
 
     const fechaObj = new Date(fecha);
     fechaObj.setDate(fechaObj.getDate() + 2); // Ajuste de día
