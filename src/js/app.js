@@ -279,8 +279,14 @@ function mostrarResumen() {
     headingCita.textContent = 'Resumen de Cita';
     resumen.appendChild(headingCita);
 
-    const nombre1 = document.getElementById('nombre').value.trim();
-    document.getElementById('resultado').innerHTML = `<span>Nombre:</span> ${nombre}`;
+    const nombre1= document.getElementById("nombre").value.trim();
+    const resumen1 = document.getElementById("nombre-resumen");
+
+    if (nombre1) {
+      resumen1.textContent = nombre;
+    } else {
+      resumen1.textContent = "[sin nombre]";
+    }
 
     const fechaObj = new Date(fecha);
     fechaObj.setDate(fechaObj.getDate() + 2); // Ajuste de día
