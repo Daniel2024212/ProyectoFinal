@@ -165,7 +165,7 @@ function idCliente() {
 }
 
 function nombreCliente() {
-    const inputNombre = document.querySelector('#nombre');
+    const inputNombre = document.querySelector('#nombre').value;
     const nombre = inputNombre.value.trim();
 
     if(nombre === '') {
