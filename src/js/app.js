@@ -165,8 +165,8 @@ function idCliente() {
 }
 
 function nombreCliente() {
-    const nombre = document.querySelector('#nombre').value;
-    cita.nombre = nombre;
+    const nombre1 = document.querySelector('#nombre').value;
+    cita.nombre = nombre1;
 }
 
 function seleccionarFecha() {

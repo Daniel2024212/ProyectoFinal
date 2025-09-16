@@ -25,9 +25,8 @@ include_once __DIR__ . '/../templates/barra.php';
 
         <form class="formulario">
             <div class="campo">
-                <label for="nombre">Nombre:</label>
-                <input type="text" id="nombre" name="nombre" placeholder="Escribe tu nombre" required>
-
+                <label for="nombre">Nombre completo</label>
+                <input id="nombre" type="text" placeholder="Tu Nombre">
             </div> <!-- .campo -->
 
             <div class="campo">
