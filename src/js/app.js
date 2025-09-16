@@ -165,8 +165,18 @@ function idCliente() {
 }
 
 function nombreCliente() {
-    const nombre = document.querySelectorAll('#nombre').value;
+    const inputNombre = document.querySelector('#nombre');
+    const nombre = inputNombre.value.trim();
+
+    if(nombre === '') {
+        mostrarAlerta('Debes ingresar tu nombre', 'error', '.formulario');
+        cita.nombre = '';
+        localStorage.removeItem('nombreCliente');
+        return;
+    }
+
     cita.nombre = nombre;
+    localStorage.setItem('nombreCliente', nombre); // Persistencia local
 }
 
 function seleccionarFecha() {
