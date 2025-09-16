@@ -279,8 +279,8 @@ function mostrarResumen() {
     headingCita.textContent = 'Resumen de Cita';
     resumen.appendChild(headingCita);
 
-    const nombreCliente = document.getElementById('nombre').value.trim();
-    nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
+    const nombre1 = document.getElementById('nombre').value.trim();
+    document.getElementById('resultado').innerHTML = `<span>Nombre:</span> ${nombre}`;
 
     const fechaObj = new Date(fecha);
     fechaObj.setDate(fechaObj.getDate() + 2); // Ajuste de día
@@ -303,7 +303,7 @@ function mostrarResumen() {
     botonReservar.textContent = 'Reservar Cita';
     botonReservar.onclick = reservarCita;
 
-    resumen.appendChild(nombreCliente);
+    resumen.appendChild(nombre1);
     resumen.appendChild(fechaCita);
     resumen.appendChild(horaCita);
     resumen.appendChild(botonReservar);
