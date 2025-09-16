@@ -280,7 +280,7 @@ function mostrarResumen() {
     resumen.appendChild(headingCita);
 
     const nombreCliente = document.getElementById("nombre");
-    nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;4
+    nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
     if (nombre) {
       nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
     } else {
