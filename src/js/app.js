@@ -165,8 +165,10 @@ function idCliente() {
 }
 
 function nombreCliente() {
-    const nombre = document.querySelector('#nombre').value;
-    cita.nombre = nombre;
+    const inputNombre = document.querySelector('#nombre_cliente');
+    inputNombre.addEventListener('input', function(e) {
+        cita.nombre = e.target.value;
+    });
 }
 
 function seleccionarFecha() {
