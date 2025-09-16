@@ -165,8 +165,21 @@ function idCliente() {
 }
 
 function nombreCliente() {
-    const nombre1 = document.querySelector('#nombre').value;
-    cita.nombre = nombre1;
+    const inputNombre = document.querySelector('#nombre');
+    if (!inputNombre) return;
+
+    inputNombre.addEventListener('input', e => {
+        const valor = e.target.value;
+        const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+
+        if (!regex.test(valor)) {
+            mostrarAlerta('Solo se permiten letras y espacios en el nombre', 'error', '.formulario');
+            e.target.value = valor.slice(0, -1);
+            return;
+        }
+
+        cita.nombre = e.target.value;
+    });
 }
 
 function seleccionarFecha() {
