@@ -281,12 +281,6 @@ function mostrarResumen() {
 
     const nombreCliente = document.getElementById("nombre");
     nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
-    if (nombre) {
-      nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
-    } else {
-      nombreCliente.innerHTML = `<span style="color:red;">Por favor ingresa un nombre válido.</span>`;
-    }
-
 
     const fechaObj = new Date(fecha);
     fechaObj.setDate(fechaObj.getDate() + 2); // Ajuste de día
