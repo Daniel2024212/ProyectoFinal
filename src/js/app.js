@@ -165,26 +165,12 @@ function idCliente() {
 }
 
 function nombreCliente() {
-    const inputNombre = document.querySelector('#nombre').value;
-    const nombre = inputNombre.value.trim();
-
-    if(nombre === '') {
-        mostrarAlerta('Debes ingresar tu nombre', 'error', '.formulario');
-        cita.nombre = '';
-        return;
-    }
-
+    const nombre = document.querySelectorAll('#nombre').value;
     cita.nombre = nombre;
 }
 
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
-
-    // Bloquear escritura manual
-    inputFecha.addEventListener('keydown', function(e) {
-        e.preventDefault();
-    });
-
 
     inputFecha.addEventListener('input', function(e) {
         const dia = new Date(e.target.value).getUTCDay();
