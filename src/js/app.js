@@ -165,22 +165,13 @@ function idCliente() {
 }
 
 function nombreCliente() {
-    const inputNombre = document.querySelector('#nombre');
-    const nombre = inputNombre.value.trim();
-
-    if(nombre === '') {
-        mostrarAlerta('Debes ingresar tu nombre', 'error', '.formulario');
-        cita.nombre = '';
-        localStorage.removeItem('nombreCliente');
-        return;
-    }
-
+    const nombre = document.querySelector('#nombre').value;
     cita.nombre = nombre;
-    localStorage.setItem('nombreCliente', nombre); // Persistencia local
 }
 
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
+
 
     inputFecha.addEventListener('input', function(e) {
         const dia = new Date(e.target.value).getUTCDay();
