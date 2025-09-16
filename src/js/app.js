@@ -318,6 +318,13 @@ async function reservarCita() {
     datos.append('usuarioId', id);
     datos.append('servicios', idServicios);
 
+    const respuesta = await fetch('/api/citas', {
+        method: 'POST',
+        body: datos
+    });
+    const resultado = await respuesta.json();
+    console.log(resultado.nombre_cliente);
+
     // console.log([...datos]);
     // return;
     try {

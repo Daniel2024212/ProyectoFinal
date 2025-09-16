@@ -46,7 +46,11 @@ class APIController
         }
 
         // Retornamos una respuesta:
-        echo json_encode(['resultado' => $resultado]);
+        // Retornamos la respuesta al frontend
+        echo json_encode([
+            'resultado' => $resultado,
+            'nombre_cliente' => $nombre_cliente
+        ]);
     }
 
     public static function eliminar()
