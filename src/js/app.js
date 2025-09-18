@@ -211,7 +211,7 @@ function inicializarValoracion() {
     if (!seccion) return;
 
     // Necesitas pasar estos valores desde el backend (data-attrs o inputs hidden)
-    const citaId   = seccion.dataset.citaId;    // ej. <div id="valoracion" data-cita-id="123">
+    const citaId = seccion.dataset.citaId;    // ej. <div id="valoracion" data-cita-id="123">
     const usuarioId = seccion.dataset.usuarioId;
     const fechaCita = seccion.dataset.fechaCita; // fecha completa en ISO o 'YYYY-MM-DD HH:MM'
 
@@ -222,12 +222,12 @@ function inicializarValoracion() {
 
     const btnValoracion = document.getElementById('btn-valoracion');
     btnValoracion?.addEventListener('click', async () => {
-        const estrellas  = document.getElementById('valoracion-estrellas').value;
+        const estrellas = document.getElementById('valoracion-estrellas').value;
         const comentario = document.getElementById('valoracion-comentario').value;
 
         if (!estrellas) {
             mostrarAlerta('Selecciona una calificación',
-                          'error', '#valoracion', false);
+                'error', '#valoracion', false);
             return;
         }
 
