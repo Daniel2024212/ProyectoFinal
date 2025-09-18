@@ -9,8 +9,9 @@ include_once __DIR__ . '/../templates/barra.php';
     <nav class="tabs">
         <button class="actual" type="button" data-paso="1">Servicios</button>
         <button type="button" data-paso="2">Información Cita</button>
-        <button type="button" data-paso="3">Resumen</button>
-        <button type="button" data-paso="4">Valoración</button>
+        <button type="button" data-paso="3">Pagos</button>
+        <button type="button" data-paso="4">Resumen</button>
+        <button type="button" data-paso="5">Valoración</button>
     </nav>
 
     <div id="paso-1" class="seccion">
@@ -49,7 +50,7 @@ include_once __DIR__ . '/../templates/barra.php';
     </div>
 
     <!-- Sección para la valoración -->
-    <div id="valoracion" class="seccion ocultar">
+    <div id="paso-5" class="seccion ocultar">
         <h2>Deja tu valoración</h2>
         <form id="form-valoracion">
             <input type="hidden" id="valoracion-cita-id" value="">

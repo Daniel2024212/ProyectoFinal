@@ -1,6 +1,6 @@
 let paso = 1;
 const pasoInicial = 1;
-const pasoFinal = 3;
+const pasoFinal = 5;
 const cita = {
     id: '',
     nombre: '',
@@ -98,7 +98,7 @@ function paginaSiguiente() {
     const paginaSiguiente = document.querySelector('#siguiente');
 
     paginaSiguiente.addEventListener('click', function () {
-        paso >= pasoFinal ? paso = 3 : paso++;
+        paso >= pasoFinal ? paso = 5 : paso++;
         botonesPaginador();
     });
 }
