@@ -73,10 +73,14 @@ function botonesPaginador() {
     if (paso === 1) {
         paginaAnterior.classList.add('ocultar');
         paginaSiguite.classList.remove('ocultar'); // Visible
-    } else if (paso === 3) {
+    } else if (paso === 4) {
         paginaAnterior.classList.remove('ocultar'); // Visible
         paginaSiguite.classList.add('ocultar');
         mostrarResumen();
+    } else if (paso === 5) {
+        paginaAnterior.classList.remove('ocultar'); // Visible
+        paginaSiguite.classList.add('ocultar');
+        mostrarValoracion();
     } else {
         paginaAnterior.classList.remove('ocultar'); // Visible
         paginaSiguite.classList.remove('ocultar'); // Visible
