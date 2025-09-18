@@ -9,9 +9,7 @@ include_once __DIR__ . '/../templates/barra.php';
     <nav class="tabs">
         <button class="actual" type="button" data-paso="1">Servicios</button>
         <button type="button" data-paso="2">Información Cita</button>
-        <button type="button" data-paso="3">Pagos</button>
-        <button type="button" data-paso="4">Resumen</button>
-        <button type="button" data-paso="5">Valoración</button>
+        <button type="button" data-paso="3">Resumen</button>
     </nav>
 
     <div id="paso-1" class="seccion">
@@ -28,7 +26,7 @@ include_once __DIR__ . '/../templates/barra.php';
         <form class="formulario">
             <div class="campo">
                 <label for="nombre_cliente">Nombre completo</label>
-                <input id="nombre_cliente" type="text" placeholder="Tu Nombre" required>
+                <input id="nombre_cliente" type="text" placeholder="Tu Nombre" value="<?php echo $nombre; ?>" >
             </div> <!-- .campo -->
 
             <div class="campo">
@@ -44,62 +42,10 @@ include_once __DIR__ . '/../templates/barra.php';
         </form>
     </div>
 
-    <div id="paso-2" class="seccion">
-        <h2>Pago</h2>
-        <form id="form-pago">
-            <label>Nombre del cliente
-                <input type="text" id="pago-nombre" placeholder="Tu nombre" required>
-            </label>
-
-            <label>Monto a pagar
-                <input type="number" step="0.01" id="pago-monto" readonly>
-            </label>
-
-            <label>Método de pago
-                <select id="pago-metodo" required>
-                    <option value="tarjeta">Tarjeta</option>
-                    <option value="efectivo">Efectivo</option>
-                </select>
-            </label>
-
-            <button type="button" id="btn-pagar" class="boton">Realizar Pago</button>
-            <p id="pago-resultado" class="mensaje"></p>
-        </form>
-    </div>
-
-
-    <div id="paso-4" class="seccion contenido-resumen">
+    <div id="paso-3" class="seccion contenido-resumen">
         <h2>Resumen</h2>
         <p class="text-center">Verifica que la información sea correacta</p>
     </div>
-
-    <!-- Sección para la valoración -->
-    <div id="paso-5" class="seccion ocultar">
-        <h2>Deja tu valoración</h2>
-        <form id="form-valoracion">
-            <input type="hidden" id="valoracion-cita-id" value="">
-            <input type="hidden" id="valoracion-usuario-id" value="<?= $_SESSION['id'] ?? '' ?>">
-
-            <label>Calificación (1 a 5 estrellas)
-                <select id="valoracion-estrellas" required>
-                    <option value="">Selecciona</option>
-                    <option value="1">1 ★</option>
-                    <option value="2">2 ★★</option>
-                    <option value="3">3 ★★★</option>
-                    <option value="4">4 ★★★★</option>
-                    <option value="5">5 ★★★★★</option>
-                </select>
-            </label>
-
-            <label>Comentario
-                <textarea id="valoracion-comentario" placeholder="Escribe tu opinión"></textarea>
-            </label>
-
-            <button type="button" id="btn-valoracion" class="boton">Enviar Valoración</button>
-            <p id="valoracion-resultado"></p>
-        </form>
-    </div>
-
 
     <div class="paginacion">
         <button id="anterior" class="boton">&laquo; Anterior</button>
