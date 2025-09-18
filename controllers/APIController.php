@@ -17,17 +17,6 @@ class APIController
 
     public static function guardar()
     {
-        // Validación de datos obligatorios
-        $nombre_cliente = $_POST['nombre_cliente'] ?? '';
-        $fecha = $_POST['fecha'] ?? '';
-        $hora = $_POST['hora'] ?? '';
-        $servicios = $_POST['servicios'] ?? '';
-
-        if (empty($nombre_cliente) || empty($fecha) || empty($hora) || empty($servicios)) {
-            echo json_encode(['resultado' => false, 'mensaje' => 'Falta datos de servicio, fecha u hora']);
-            return;
-        }
-
         // Almacena la cita y devuelve el ID:
         $cita = new Cita($_POST);
         $resultado = $cita->guardar();
@@ -46,11 +35,7 @@ class APIController
         }
 
         // Retornamos una respuesta:
-        // Retornamos la respuesta al frontend
-        echo json_encode([
-            'resultado' => $resultado,
-            'nombre_cliente' => $nombre_cliente
-        ]);
+        echo json_encode(['resultado' => $resultado]);
     }
 
     public static function eliminar()

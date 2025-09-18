@@ -10,6 +10,7 @@ include_once __DIR__ . '/../templates/barra.php';
         <button class="actual" type="button" data-paso="1">Servicios</button>
         <button type="button" data-paso="2">Información Cita</button>
         <button type="button" data-paso="3">Resumen</button>
+        <button type="button" data-paso="4">Valoración</button>
     </nav>
 
     <div id="paso-1" class="seccion">
@@ -46,6 +47,34 @@ include_once __DIR__ . '/../templates/barra.php';
         <h2>Resumen</h2>
         <p class="text-center">Verifica que la información sea correacta</p>
     </div>
+
+    <!-- Sección para la valoración -->
+    <div id="valoracion" class="seccion ocultar">
+        <h2>Deja tu valoración</h2>
+        <form id="form-valoracion">
+            <input type="hidden" id="valoracion-cita-id" value="">
+            <input type="hidden" id="valoracion-usuario-id" value="<?= $_SESSION['id'] ?? '' ?>">
+
+            <label>Calificación (1 a 5 estrellas)
+                <select id="valoracion-estrellas" required>
+                    <option value="">Selecciona</option>
+                    <option value="1">1 ★</option>
+                    <option value="2">2 ★★</option>
+                    <option value="3">3 ★★★</option>
+                    <option value="4">4 ★★★★</option>
+                    <option value="5">5 ★★★★★</option>
+                </select>
+            </label>
+
+            <label>Comentario
+                <textarea id="valoracion-comentario" placeholder="Escribe tu opinión"></textarea>
+            </label>
+
+            <button type="button" id="btn-valoracion" class="boton">Enviar Valoración</button>
+            <p id="valoracion-resultado"></p>
+        </form>
+    </div>
+
 
     <div class="paginacion">
         <button id="anterior" class="boton">&laquo; Anterior</button>
