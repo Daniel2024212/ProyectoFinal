@@ -1,6 +1,6 @@
 let paso = 1;
 const pasoInicial = 1;
-const pasoFinal = 5;
+const pasoFinal = 3;
 const cita = {
     id: '',
     nombre: '',
@@ -73,14 +73,10 @@ function botonesPaginador() {
     if (paso === 1) {
         paginaAnterior.classList.add('ocultar');
         paginaSiguite.classList.remove('ocultar'); // Visible
-    } else if (paso === 4) {
+    } else if (paso === 3) {
         paginaAnterior.classList.remove('ocultar'); // Visible
         paginaSiguite.classList.add('ocultar');
         mostrarResumen();
-    } else if (paso === 5) {
-        paginaAnterior.classList.remove('ocultar'); // Visible
-        paginaSiguite.classList.add('ocultar');
-        mostrarValoracion();
     } else {
         paginaAnterior.classList.remove('ocultar'); // Visible
         paginaSiguite.classList.remove('ocultar'); // Visible
@@ -102,7 +98,7 @@ function paginaSiguiente() {
     const paginaSiguiente = document.querySelector('#siguiente');
 
     paginaSiguiente.addEventListener('click', function () {
-        paso >= pasoFinal ? paso = 5 : paso++;
+        paso >= pasoFinal ? paso = 3 : paso++;
         botonesPaginador();
     });
 }
@@ -209,56 +205,6 @@ function seleccionarHora() {
         }
     });
 }
-
-function inicializarValoracion() {
-    const seccion = document.getElementById('valoracion');
-    if (!seccion) return;
-
-    // Necesitas pasar estos valores desde el backend (data-attrs o inputs hidden)
-    const citaId = seccion.dataset.citaId;    // ej. <div id="valoracion" data-cita-id="123">
-    const usuarioId = seccion.dataset.usuarioId;
-    const fechaCita = seccion.dataset.fechaCita; // fecha completa en ISO o 'YYYY-MM-DD HH:MM'
-
-    // Mostrar si ya pasó
-    if (fechaCita && new Date(fechaCita) < new Date()) {
-        seccion.classList.remove('ocultar');
-    }
-
-    const btnValoracion = document.getElementById('btn-valoracion');
-    btnValoracion?.addEventListener('click', async () => {
-        const estrellas = document.getElementById('valoracion-estrellas').value;
-        const comentario = document.getElementById('valoracion-comentario').value;
-
-        if (!estrellas) {
-            mostrarAlerta('Selecciona una calificación',
-                'error', '#valoracion', false);
-            return;
-        }
-
-        const res = await fetch('/api/valoraciones/crear', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                cita_id: citaId,
-                usuario_id: usuarioId,
-                estrellas: estrellas,
-                comentario: comentario
-            })
-        });
-        const json = await res.json();
-        const salida = document.getElementById('valoracion-resultado');
-        salida.textContent = json.success
-            ? '¡Gracias por tu valoración!'
-            : `Error: ${json.error || 'no se pudo guardar'}`;
-    });
-}
-
-// ======== INICIALIZACIÓN ========
-
-document.addEventListener('DOMContentLoaded', () => {
-    inicializarPago();
-    inicializarValoracion();
-});
 
 function mostrarAlerta(mensaje, tipo, elemento, desaparece = true) {
     const alertaPrevia = document.querySelector('.alerta');
