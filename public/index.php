@@ -41,11 +41,9 @@ $router->get('/api/servicios', [APIController::class, 'index']);
 $router->post('/api/citas', [APIController::class, 'guardar']);
 $router->post('/api/eliminar', [APIController::class, 'eliminar']);
 
-$router->post('/api/valoraciones/crear', [ValoracionesController::class, 'crear']);
-$router->get('/api/valoraciones', [ValoracionesController::class, 'listar']);
+$router->post('/api/pagos/crear', [Controllers\API\PagosController::class, 'crear']);
+$router->post('/api/valoraciones/crear', [Controllers\API\ValoracionesController::class, 'crear']);
 
-$router->post('/api/pagos/crear', [PagosController::class, 'crear']);
-$router->get('/api/pagos', [PagosController::class, 'listar']);
 
 // CRUD de servicios:
 $router->get('/servicios', [ServicioController::class, 'index']);

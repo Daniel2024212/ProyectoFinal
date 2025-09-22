@@ -320,6 +320,53 @@ function inicializarPago() {
     });
 }
 
+function actualizarTotalPago() {
+    const total = cita.servicios.reduce((acc, s) => acc + parseFloat(s.precio), 0);
+    document.getElementById('pago-total').textContent = `$${total.toFixed(2)}`;
+}
+
+const btnPagar = document.getElementById('btn-pagar');
+btnPagar?.addEventListener('click', async () => {
+    const monto = cita.servicios.reduce((acc, s) => acc + parseFloat(s.precio), 0);
+    const metodo = document.getElementById('pago-metodo').value;
+
+    const res = await fetch('/api/pagos/crear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            usuario_id: cita.id,
+            cita_id: cita.id, // si relacionas pago-cita
+            monto: monto,
+            metodo: metodo
+        })
+    });
+    const json = await res.json();
+    document.getElementById('pago-resultado').textContent =
+        json.success ? `Pago registrado. Ref: ${json.pago_id}` : `Error: ${json.error}`;
+});
+
+// Valoración
+const btnVal = document.getElementById('btn-valoracion');
+btnVal?.addEventListener('click', async () => {
+    const estrellas  = document.getElementById('valoracion-estrellas').value;
+    const comentario = document.getElementById('valoracion-comentario').value;
+
+    const res = await fetch('/api/valoraciones/crear', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            usuario_id: cita.id,
+            cita_id: cita.id,
+            estrellas: estrellas,
+            comentario: comentario
+        })
+    });
+    const json = await res.json();
+    document.getElementById('valoracion-resultado').textContent =
+        json.success ? '¡Gracias por tu valoración!' : `Error: ${json.error}`;
+});
+
+
 /* ===================== NUEVO: VALORACIÓN ===================== */
 function inicializarValoracion() {
     // Se prepara la escucha, se mostrará en mostrarValoracion

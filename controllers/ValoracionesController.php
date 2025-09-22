@@ -1,42 +1,30 @@
 <?php
-
-namespace Controllers;
-
+namespace Controllers\API;
 use MVC\Router;
 use Model\Valoracion;
 
 class ValoracionesController {
+    public static function crear() {
+        $input = json_decode(file_get_contents('php://input'), true);
 
-    public static function crear(Router $router) {
-        if($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $valoracion = new Valoracion($_POST);
+        $usuarioId = $input['usuario_id'] ?? null;
+        $citaId    = $input['cita_id'] ?? null;
+        $estrellas = $input['estrellas'] ?? null;
+        $coment    = $input['comentario'] ?? '';
 
-            // Validar campos
-            if(
-                empty($valoracion->usuario_id) ||
-                empty($valoracion->servicio_id) ||
-                empty($valoracion->estrellas)
-            ) {
-                echo json_encode(['success'=>false,'error'=>'Campos requeridos']);
-                return;
-            }
-
-            $valoracion->guardar();
-            echo json_encode(['success'=>true,'id'=>$valoracion->id]);
-        }
-    }
-
-    public static function listar(Router $router) {
-        // Filtrar por servicio usando el método where existente
-        $servicio_id = $_GET['servicio_id'] ?? null;
-
-        if(!$servicio_id) {
-            echo json_encode(['success'=>false,'error'=>'servicio_id requerido']);
+        if(!$usuarioId || !$citaId || !$estrellas) {
+            echo json_encode(['success'=>false,'error'=>'Datos incompletos']);
             return;
         }
 
-        // where solo admite un campo
-        $valoraciones = Valoracion::where('servicio_id', $servicio_id);
-        echo json_encode($valoraciones);
+        $valor = new Valoracion([
+            'usuario_id' => $usuarioId,
+            'cita_id'    => $citaId,
+            'estrellas'  => $estrellas,
+            'comentario' => $coment
+        ]);
+        $valor->guardar();
+
+        echo json_encode(['success'=>true,'valoracion_id'=>$valor->id]);
     }
 }

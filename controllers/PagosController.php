@@ -1,32 +1,30 @@
 <?php
-
-namespace Controllers;
-
+namespace Controllers\API;
 use MVC\Router;
 use Model\Pago;
-use Database; // asegúrate de que Database.php tenga `class Database`
-require_once __DIR__ . '/../config/Database.php';
-
 
 class PagosController {
+    public static function crear() {
+        $input = json_decode(file_get_contents('php://input'), true);
 
-    public static function crear(Router $router) {
-        if($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $pago = new Pago($_POST);
-            $pago->guardar();
+        $usuarioId = $input['usuario_id'] ?? null;
+        $citaId    = $input['cita_id'] ?? null;
+        $monto     = $input['monto'] ?? 0;
+        $metodo    = $input['metodo'] ?? '';
 
-            // Conexión directa con la clase Database
-            $db = (new \Database())->getConnection();
-            $stmt = $db->prepare("UPDATE citas SET estado = 'confirmada' WHERE id = ?");
-            $stmt->execute([$_POST['cita_id']]);
-
-            echo json_encode(['success'=>true,'pago_id'=>$pago->id]);
+        if(!$usuarioId || $monto <= 0 || !$metodo) {
+            echo json_encode(['success'=>false,'error'=>'Datos incompletos']);
+            return;
         }
-    }
 
-    public static function listar(Router $router) {
-        $cita_id = $_GET['cita_id'] ?? null;
-        $pagos = Pago::where('cita_id', $cita_id);
-        echo json_encode($pagos);
+        $pago = new Pago([
+            'usuario_id' => $usuarioId,
+            'cita_id'    => $citaId,
+            'metodo'     => $metodo,
+            'monto'      => $monto
+        ]);
+        $pago->guardar();
+
+        echo json_encode(['success'=>true,'pago_id'=>$pago->id]);
     }
 }
