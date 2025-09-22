@@ -1,16 +1,20 @@
+// =====================
+// Variables globales
+// =====================
 let paso = 1;
 const pasoInicial = 1;
-const pasoFinal = 5;   // ahora tenemos 5 pasos
-
+const pasoFinal   = 4; // 1=Servicios, 2=Pago, 3=Datos, 4=Resumen
 const cita = {
     id: '',
     nombre: '',
     fecha: '',
     hora: '',
-    servicios: [],
-    pago: null        // para guardar info de pago
+    servicios: []
 };
 
+// =====================
+// Inicio
+// =====================
 document.addEventListener('DOMContentLoaded', function () {
     iniciarApp();
 });
@@ -21,23 +25,24 @@ function iniciarApp() {
     botonesPaginador();
     paginaSiguiente();
     paginaAnterior();
-
     consultarAPI();
+
     idCliente();
     nombreCliente();
     seleccionarFecha();
     seleccionarHora();
-    inicializarPago();        // NUEVO: manejo de pago
-    inicializarValoracion();  // NUEVO: manejo de valoración
+
     mostrarResumen();
 }
 
+// =====================
+// Navegación de pasos
+// =====================
 function mostrarSeccion() {
     const seccionAnterior = document.querySelector('.mostrar');
     if (seccionAnterior) seccionAnterior.classList.remove('mostrar');
 
-    const pasoSelector = `#paso-${paso}`;
-    const seccion = document.querySelector(pasoSelector);
+    const seccion = document.querySelector(`#paso-${paso}`);
     if (seccion) seccion.classList.add('mostrar');
 
     const tabAnterior = document.querySelector('.actual');
@@ -49,7 +54,7 @@ function mostrarSeccion() {
 
 function tabs() {
     document.querySelectorAll('.tabs button').forEach(boton => {
-        boton.addEventListener('click', function (e) {
+        boton.addEventListener('click', e => {
             paso = parseInt(e.target.dataset.paso);
             mostrarSeccion();
             botonesPaginador();
@@ -58,46 +63,47 @@ function tabs() {
 }
 
 function botonesPaginador() {
-    const paginaAnterior = document.querySelector('#anterior');
-    const paginaSiguiente = document.querySelector('#siguiente');
+    const anterior = document.querySelector('#anterior');
+    const siguiente = document.querySelector('#siguiente');
 
     if (paso === 1) {
-        paginaAnterior.classList.add('ocultar');
-        paginaSiguiente.classList.remove('ocultar');
-    } else if (paso === 4) {
-        paginaAnterior.classList.remove('ocultar');
-        paginaSiguiente.classList.remove('ocultar'); // permite ir a 5
+        anterior.classList.add('ocultar');
+        siguiente.classList.remove('ocultar');
+    } else if (paso === pasoFinal) {
+        anterior.classList.remove('ocultar');
+        siguiente.classList.add('ocultar');
         mostrarResumen();
-    } else if (paso === 5) {
-        paginaAnterior.classList.remove('ocultar');
-        paginaSiguiente.classList.add('ocultar');
-        mostrarValoracion();
     } else {
-        paginaAnterior.classList.remove('ocultar');
-        paginaSiguiente.classList.remove('ocultar');
+        anterior.classList.remove('ocultar');
+        siguiente.classList.remove('ocultar');
     }
+
     mostrarSeccion();
 }
 
 function paginaAnterior() {
-    document.querySelector('#anterior').addEventListener('click', function () {
+    document.querySelector('#anterior').addEventListener('click', () => {
         paso <= pasoInicial ? paso = 1 : paso--;
         botonesPaginador();
     });
 }
 
 function paginaSiguiente() {
-    document.querySelector('#siguiente').addEventListener('click', function () {
+    document.querySelector('#siguiente').addEventListener('click', () => {
         paso >= pasoFinal ? paso = pasoFinal : paso++;
         botonesPaginador();
     });
 }
 
+// =====================
+// API de Servicios
+// =====================
 async function consultarAPI() {
     try {
         const url = `${location.origin}/api/servicios`;
         const resultado = await fetch(url);
-        mostrarServicios(await resultado.json());
+        const servicios = await resultado.json();
+        mostrarServicios(servicios);
     } catch (error) {
         console.log(error);
     }
@@ -122,33 +128,51 @@ function mostrarServicios(servicios) {
 
         servicioDiv.appendChild(nombreServicio);
         servicioDiv.appendChild(precioServicio);
+
         document.querySelector('#servicios').appendChild(servicioDiv);
     });
 }
 
+// =====================
+// Selección de servicios
+// =====================
 function seleccionarServicio(servicio) {
     const { id } = servicio;
+    const { servicios } = cita;
     const divServicio = document.querySelector(`[data-id-servicio='${id}'`);
-    if (cita.servicios.some(s => s.id === id)) {
-        cita.servicios = cita.servicios.filter(s => s.id !== id);
+
+    if (servicios.some(agregado => agregado.id === id)) {
+        cita.servicios = servicios.filter(agregado => agregado.id != id);
         divServicio.classList.remove('seleccionado');
     } else {
-        cita.servicios.push(servicio);
+        cita.servicios = [...servicios, servicio];
         divServicio.classList.add('seleccionado');
     }
+
+    actualizarTotalPago();
 }
 
+function actualizarTotalPago() {
+    const total = cita.servicios.reduce((acc, s) => acc + parseFloat(s.precio), 0);
+    const totalElemento = document.getElementById('pago-total');
+    if (totalElemento) totalElemento.textContent = `$${total.toFixed(2)}`;
+}
+
+// =====================
+// Datos del cliente
+// =====================
 function idCliente() {
-    const input = document.querySelector('#id');
-    if (input) cita.id = input.value;
+    const inputId = document.querySelector('#id');
+    if (inputId) cita.id = inputId.value;
 }
 
 function nombreCliente() {
     const inputNombre = document.querySelector('#nombre_cliente');
-    if (!inputNombre) return;
-    inputNombre.addEventListener('input', e => {
-        cita.nombre = e.target.value;
-    });
+    if (inputNombre) {
+        inputNombre.addEventListener('input', e => {
+            cita.nombre = e.target.value;
+        });
+    }
 }
 
 function seleccionarFecha() {
@@ -156,11 +180,11 @@ function seleccionarFecha() {
     if (!inputFecha) return;
 
     inputFecha.addEventListener('keydown', e => e.preventDefault());
-    inputFecha.addEventListener('input', function (e) {
+    inputFecha.addEventListener('input', e => {
         const dia = new Date(e.target.value).getUTCDay();
-        if ([6, 0].includes(dia)) {
+        if ([6,0].includes(dia)) {
             e.target.value = '';
-            mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
+            mostrarAlerta('Fines de semana no permitidos','error','.formulario');
         } else {
             cita.fecha = e.target.value;
         }
@@ -170,18 +194,23 @@ function seleccionarFecha() {
 function seleccionarHora() {
     const inputHora = document.querySelector('#hora');
     if (!inputHora) return;
-    inputHora.addEventListener('input', function (e) {
-        const hora = e.target.value.split(':')[0];
+
+    inputHora.addEventListener('input', e => {
+        const horaCita = e.target.value;
+        const hora = horaCita.split(':')[0];
         if (hora < 10 || hora > 18) {
             e.target.value = '';
-            mostrarAlerta('Hora no válida', 'error', '.formulario');
+            mostrarAlerta('Hora no válida','error','.formulario');
         } else {
-            cita.hora = e.target.value;
+            cita.hora = horaCita;
         }
     });
 }
 
-function mostrarAlerta(mensaje, tipo, elemento, desaparece = true) {
+// =====================
+// Alertas
+// =====================
+function mostrarAlerta(mensaje, tipo, selector, desaparece = true) {
     const alertaPrevia = document.querySelector('.alerta');
     if (alertaPrevia) alertaPrevia.remove();
 
@@ -189,16 +218,25 @@ function mostrarAlerta(mensaje, tipo, elemento, desaparece = true) {
     alerta.textContent = mensaje;
     alerta.classList.add('alerta', tipo);
 
-    document.querySelector(elemento).appendChild(alerta);
-    if (desaparece) setTimeout(() => alerta.remove(), 3000);
+    const referencia = document.querySelector(selector);
+    referencia.appendChild(alerta);
+
+    if (desaparece) {
+        setTimeout(() => alerta.remove(), 3000);
+    }
 }
 
+// =====================
+// Resumen final
+// =====================
 function mostrarResumen() {
     const resumen = document.querySelector('.contenido-resumen');
+    if (!resumen) return;
+
     while (resumen.firstChild) resumen.removeChild(resumen.firstChild);
 
     if (cita.nombre === '' || cita.fecha === '' || cita.hora === '' || cita.servicios.length === 0) {
-        mostrarAlerta('Faltan datos para la cita', 'error', '.contenido-resumen', false);
+        mostrarAlerta('Faltan datos de servicio, fecha u hora', 'error', '.contenido-resumen', false);
         return;
     }
 
@@ -208,11 +246,19 @@ function mostrarResumen() {
     headingServicios.textContent = 'Resumen de Servicios';
     resumen.appendChild(headingServicios);
 
-    servicios.forEach(servicio => {
-        const { precio, nombre } = servicio;
+    servicios.forEach(serv => {
+        const { nombre, precio } = serv;
         const contenedor = document.createElement('DIV');
         contenedor.classList.add('contenedor-servicio');
-        contenedor.innerHTML = `<p>${nombre}</p><p><span>Precio:</span> $${precio}</p>`;
+
+        const txt = document.createElement('P');
+        txt.textContent = nombre;
+
+        const precioEl = document.createElement('P');
+        precioEl.innerHTML = `<span>Precio:</span> $${precio}`;
+
+        contenedor.appendChild(txt);
+        contenedor.appendChild(precioEl);
         resumen.appendChild(contenedor);
     });
 
@@ -224,23 +270,28 @@ function mostrarResumen() {
     nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
 
     const fechaObj = new Date(fecha);
-    const fechaFormateada = fechaObj.toLocaleDateString('es-MX',
-        { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const fechaFormateada = fechaObj.toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
     const fechaCita = document.createElement('P');
     fechaCita.innerHTML = `<span>Fecha:</span> ${fechaFormateada}`;
 
     const horaCita = document.createElement('P');
-    horaCita.innerHTML = `<span>Hora:</span> ${hora} Horas`;
+    horaCita.innerHTML = `<span>Hora:</span> ${hora} Hrs`;
 
-    const botonReservar = document.createElement('BUTTON');
-    botonReservar.classList.add('boton');
-    botonReservar.textContent = 'Reservar Cita';
-    botonReservar.onclick = reservarCita;
+    const boton = document.createElement('BUTTON');
+    boton.classList.add('boton');
+    boton.textContent = 'Reservar Cita';
+    boton.onclick = reservarCita;
 
-    resumen.append(nombreCliente, fechaCita, horaCita, botonReservar);
+    resumen.appendChild(nombreCliente);
+    resumen.appendChild(fechaCita);
+    resumen.appendChild(horaCita);
+    resumen.appendChild(boton);
 }
 
+// =====================
+// Reservar Cita
+// =====================
 async function reservarCita() {
     const { nombre, fecha, hora, servicios, id } = cita;
     const idServicios = servicios.map(s => s.id);
@@ -258,156 +309,49 @@ async function reservarCita() {
         const resultado = await respuesta.json();
 
         if (resultado.resultado) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Cita Creada',
-                text: 'Tu cita fue creada correctamente',
-                button: 'OK'
-            }).then(() => setTimeout(() => window.location.reload(), 3000));
+            Swal.fire('Cita Creada', 'Tu cita fue creada correctamente', 'success')
+                .then(() => window.location.reload());
         }
     } catch (error) {
-        Swal.fire({ icon: 'error', title: 'Error', text: 'Hubo un error al guardar la cita' });
+        Swal.fire('Error', 'Hubo un error al guardar la cita', 'error');
     }
 }
 
-/* ===================== NUEVO: PAGO ===================== */
-function inicializarPago() {
-    const btn = document.getElementById('btn-pagar');
-    if (!btn) return;
-
-    btn.addEventListener('click', async () => {
-        if (cita.servicios.length === 0) {
-            mostrarAlerta('Selecciona al menos un servicio antes de pagar',
-                          'error', '#paso-2', false);
+// =====================
+// Pago en Efectivo
+// =====================
+document.addEventListener('DOMContentLoaded', () => {
+    const btnPagar = document.getElementById('btn-pagar');
+    btnPagar?.addEventListener('click', async () => {
+        const monto = cita.servicios.reduce((acc, s) => acc + parseFloat(s.precio), 0);
+        if (monto <= 0) {
+            Swal.fire('Error','Debes seleccionar al menos un servicio','error');
             return;
         }
-
-        const nombrePago = document.getElementById('pago-nombre').value.trim();
-        if (!nombrePago) {
-            mostrarAlerta('Ingresa tu nombre', 'error', '#paso-2', false);
-            return;
-        }
-
-        const total  = cita.servicios.reduce((s, srv) => s + Number(s.precio), 0);
-        const metodo = document.getElementById('pago-metodo').value;
 
         try {
             const res = await fetch('/api/pagos/crear', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    cita_id: 0,
                     usuario_id: cita.id,
-                    nombre: nombrePago,
-                    monto: total,
-                    metodo: metodo
+                    cita_id: cita.id,
+                    monto: monto,
+                    metodo: 'efectivo'
                 })
             });
-
             const json = await res.json();
-            document.getElementById('pago-resultado').textContent =
-                json.success ? `Pago registrado. Ref: ${json.referencia}` : `Error: ${json.error}`;
-
             if (json.success) {
-                cita.nombre = nombrePago;
-                cita.pago = { metodo, monto: total, referencia: json.referencia };
+                document.getElementById('pago-resultado').textContent =
+                    `Pago en efectivo registrado. Folio: ${json.pago_id}`;
                 paso = 3;
                 botonesPaginador();
+            } else {
+                Swal.fire('Error', json.error || 'No se pudo registrar el pago', 'error');
             }
         } catch (err) {
-            mostrarAlerta('Error de conexión al pagar', 'error', '#paso-2', false);
+            console.error(err);
+            Swal.fire('Error','Error de conexión al procesar el pago','error');
         }
     });
-}
-
-function actualizarTotalPago() {
-    const total = cita.servicios.reduce((acc, s) => acc + parseFloat(s.precio), 0);
-    document.getElementById('pago-total').textContent = `$${total.toFixed(2)}`;
-}
-
-const btnPagar = document.getElementById('btn-pagar');
-btnPagar?.addEventListener('click', async () => {
-    const monto = cita.servicios.reduce((acc, s) => acc + parseFloat(s.precio), 0);
-    const metodo = document.getElementById('pago-metodo').value;
-
-    const res = await fetch('/api/pagos/crear', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            usuario_id: cita.id,
-            cita_id: cita.id, // si relacionas pago-cita
-            monto: monto,
-            metodo: metodo
-        })
-    });
-    const json = await res.json();
-    document.getElementById('pago-resultado').textContent =
-        json.success ? `Pago registrado. Ref: ${json.pago_id}` : `Error: ${json.error}`;
 });
-
-// Valoración
-const btnVal = document.getElementById('btn-valoracion');
-btnVal?.addEventListener('click', async () => {
-    const estrellas  = document.getElementById('valoracion-estrellas').value;
-    const comentario = document.getElementById('valoracion-comentario').value;
-
-    const res = await fetch('/api/valoraciones/crear', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            usuario_id: cita.id,
-            cita_id: cita.id,
-            estrellas: estrellas,
-            comentario: comentario
-        })
-    });
-    const json = await res.json();
-    document.getElementById('valoracion-resultado').textContent =
-        json.success ? '¡Gracias por tu valoración!' : `Error: ${json.error}`;
-});
-
-
-/* ===================== NUEVO: VALORACIÓN ===================== */
-function inicializarValoracion() {
-    // Se prepara la escucha, se mostrará en mostrarValoracion
-    const btn = document.getElementById('btn-valoracion');
-    if (!btn) return;
-
-    btn.addEventListener('click', async () => {
-        const estrellas  = document.getElementById('valoracion-estrellas').value;
-        const comentario = document.getElementById('valoracion-comentario').value;
-
-        const fechaHoraCita = new Date(`${cita.fecha}T${cita.hora}`);
-        if (fechaHoraCita > new Date()) {
-            mostrarAlerta('La cita aún no ha terminado', 'error', '#paso-5', false);
-            return;
-        }
-
-        const res = await fetch('/api/valoraciones/crear', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                cita_id: cita.id,
-                usuario_id: cita.id,
-                estrellas: estrellas,
-                comentario: comentario
-            })
-        });
-        const json = await res.json();
-        document.getElementById('valoracion-resultado').textContent =
-            json.success ? '¡Gracias por tu valoración!' : `Error: ${json.error}`;
-    });
-}
-
-function mostrarValoracion() {
-    // Muestra la sección de valoración (paso 5) si ya pasó la cita
-    const seccion = document.querySelector('#paso-5');
-    if (!seccion) return;
-
-    const fechaHoraCita = new Date(`${cita.fecha}T${cita.hora}`);
-    if (fechaHoraCita <= new Date()) {
-        seccion.classList.add('mostrar');
-    } else {
-        mostrarAlerta('La cita aún no ha terminado', 'error', '#paso-5', false);
-    }
-}

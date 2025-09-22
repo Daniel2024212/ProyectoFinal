@@ -22,29 +22,18 @@
 
     <!-- Paso 2: Pago -->
     <div id="paso-2" class="seccion">
-        <h2>Pago</h2>
-        <p class="text-center">Realiza el pago de los servicios seleccionados</p>
+        <h2>Pago en Efectivo</h2>
+        <p class="text-center">El total se calcula automáticamente.</p>
 
-        <form id="form-pago" class="formulario">
-            <div class="campo">
-                <label for="pago-nombre">Nombre del titular</label>
-                <input type="text" id="pago-nombre" placeholder="Tu nombre completo">
-            </div>
+        <div class="campo">
+            <label>Total a pagar</label>
+            <p id="pago-total" style="font-weight:bold;font-size:1.2rem;">$0.00</p>
+        </div>
 
-            <div class="campo">
-                <label for="pago-metodo">Método de pago</label>
-                <select id="pago-metodo">
-                    <option value="tarjeta">Tarjeta de crédito / débito</option>
-                    <option value="efectivo">Efectivo</option>
-                </select>
-            </div>
-
-            <p>Total a pagar: <strong id="pago-total" value="<?php echo $total; ?>"></strong></p>
-
-            <button type="button" id="btn-pagar" class="boton">Realizar Pago</button>
-            <p id="pago-resultado" class="mensaje"></p>
-        </form>
+        <button type="button" id="btn-pagar" class="boton">Confirmar Pago</button>
+        <p id="pago-resultado" class="mensaje"></p>
     </div>
+
 
     <!-- Paso 3: Datos de la cita -->
     <div id="paso-3" class="seccion">
