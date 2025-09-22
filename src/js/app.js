@@ -133,45 +133,43 @@ function mostrarServicios(servicios) {
     });
 }
 
-// =====================
-// Calcular y mostrar el total a pagar
-// =====================
-function actualizarTotalPago() {
-    // Suma todos los precios de los servicios seleccionados
-    const total = cita.servicios.reduce((acc, s) => acc + parseFloat(s.precio), 0);
+function mostrarServicios(servicios) {
+    servicios.forEach(servicio => {
+        const { id, nombre, precio } = servicio;
 
-    // Busca el elemento donde se mostrará el total
-    const totalElemento = document.getElementById('pago-total');
-    if (totalElemento) {
-        // Formatea el total a dos decimales
-        totalElemento.textContent = `$${total.toFixed(2)}`;
-    }
+        const nombreServicio = document.createElement('P');
+        nombreServicio.classList.add('nombre-servicio');
+        nombreServicio.textContent = nombre;
+
+        const precioServicio = document.createElement('P');
+        precioServicio.classList.add('precio-servicio');
+        precioServicio.textContent = `$${precio}`;
+
+        const servicioDiv = document.createElement('DIV');
+        servicioDiv.classList.add('servicio');
+        servicioDiv.dataset.idServicio = id;
+
+        // Clic para sumar
+        servicioDiv.onclick = () => seleccionarServicio(servicio);
+
+        // Botón para restar
+        const btnMenos = document.createElement('button');
+        btnMenos.textContent = '–';
+        btnMenos.type = 'button';
+        btnMenos.style.cssText = 'margin-left:auto;margin-right:4px;';
+        btnMenos.addEventListener('click', e => {
+            e.stopPropagation(); // Evita que sume al hacer clic en el div
+            disminuirServicio(id);
+        });
+
+        servicioDiv.appendChild(nombreServicio);
+        servicioDiv.appendChild(precioServicio);
+        servicioDiv.appendChild(btnMenos);
+
+        document.querySelector('#servicios').appendChild(servicioDiv);
+    });
 }
 
-// =====================
-// Seleccionar o quitar un servicio
-// =====================
-function seleccionarServicio(servicio) {
-    const { id } = servicio;
-    const { servicios } = cita;
-
-    // Encuentra el div del servicio clicado
-    const divServicio = document.querySelector(`[data-id-servicio='${id}'`);
-
-    // Comprueba si ya estaba seleccionado
-    if (servicios.some(agregado => agregado.id === id)) {
-        // Quitar si ya estaba
-        cita.servicios = servicios.filter(agregado => agregado.id != id);
-        divServicio.classList.remove('seleccionado');
-    } else {
-        // Agregar si no estaba
-        cita.servicios = [...servicios, servicio];
-        divServicio.classList.add('seleccionado');
-    }
-
-    // 🔑 Recalcular el total cada vez que se cambia la selección
-    actualizarTotalPago();
-}
 
 // =====================
 // Datos del cliente
