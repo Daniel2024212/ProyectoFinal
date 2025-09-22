@@ -133,6 +133,21 @@ function mostrarServicios(servicios) {
     });
 }
 
+// =====================
+// Calcular y mostrar el total a pagar
+// =====================
+function actualizarTotalPago() {
+    // Suma todos los precios de los servicios seleccionados
+    const total = cita.servicios.reduce((acc, s) => acc + parseFloat(s.precio), 0);
+
+    // Busca el elemento donde se mostrará el total
+    const totalElemento = document.getElementById('pago-total');
+    if (totalElemento) {
+        // Formatea el total a dos decimales
+        totalElemento.textContent = `$${total.toFixed(2)}`;
+    }
+}
+
 function mostrarServicios(servicios) {
     servicios.forEach(servicio => {
         const { id, nombre, precio } = servicio;
