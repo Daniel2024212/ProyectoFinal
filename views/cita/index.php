@@ -39,7 +39,7 @@
                 </select>
             </div>
 
-            <p>Total a pagar: <strong id="pago-total">$0.00</strong></p>
+            <p>Total a pagar: <strong id="pago-total" value="<?php echo $total; ?>"></strong></p>
 
             <button type="button" id="btn-pagar" class="boton">Realizar Pago</button>
             <p id="pago-resultado" class="mensaje"></p>
