@@ -49,26 +49,24 @@
     <!-- Paso 3: Datos de la cita -->
     <div id="paso-3" class="seccion">
         <h2>Tus Datos y Cita</h2>
-        <p class="text-center">Coloca tus datos y la fecha de tu cita</p>
-        <p class="text-center">Horario de atención: 10 am a 6 pm</p>
+        <p class="text-center">Coloca tus datos y fehca de tu cita</p>
 
         <form class="formulario">
             <div class="campo">
-                <label for="nombre_cliente">Nombre completo</label>
-                <input id="nombre_cliente" type="text" placeholder="Tu Nombre" value="<?php echo $nombre; ?>">
-            </div>
+                <label for="nombre">Nombre</label>
+                <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>" disabled>
+            </div> <!-- .campo -->
 
             <div class="campo">
                 <label for="fecha">Fecha</label>
                 <input id="fecha" type="date" min="<?php echo date('Y-m-d', strtotime('+1 day')); ?>">
-            </div>
+            </div> <!-- .campo -->
 
             <div class="campo">
                 <label for="hora">Hora</label>
                 <input id="hora" type="time">
-            </div>
-
-            <input type="hidden" id="id" value="<?php echo $id; ?>" onkeydown="return false">
+            </div> <!-- .campo -->
+            <input type="hidden" id="id" value="<?php echo $id; ?>">
         </form>
     </div>
 
