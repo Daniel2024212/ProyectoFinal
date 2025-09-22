@@ -1,65 +1,56 @@
 let paso = 1;
 const pasoInicial = 1;
-const pasoFinal = 3;
+const pasoFinal = 5;   // ahora tenemos 5 pasos
+
 const cita = {
     id: '',
     nombre: '',
     fecha: '',
     hora: '',
-    servicios: []
-}
+    servicios: [],
+    pago: null        // para guardar info de pago
+};
 
 document.addEventListener('DOMContentLoaded', function () {
     iniciarApp();
 });
 
 function iniciarApp() {
-    mostrarSeccion(); // Muestra y oculta las secciones.
-    tabs(); // Cambia la sección cuando se presionen los tabs.
-    botonesPaginador(); // Agrega o quita los botones del paginador.
+    mostrarSeccion();
+    tabs();
+    botonesPaginador();
     paginaSiguiente();
     paginaAnterior();
 
-    consultarAPI(); // Consulta la API en el backend de PHP.
-
-    idCliente(); // Añade el id al ojeto de cliente.
-    nombreCliente(); // Añade el nombre del cliente al objeto de cita.
-    seleccionarFecha(); // Añade la fecha de la cita en el ojeto de cita.
-    seleccionarHora(); // Añada la hora de la cita en el objeto cita.
-
-    mostrarResumen(); // Muestra el resumen de la cita.
+    consultarAPI();
+    idCliente();
+    nombreCliente();
+    seleccionarFecha();
+    seleccionarHora();
+    inicializarPago();        // NUEVO: manejo de pago
+    inicializarValoracion();  // NUEVO: manejo de valoración
+    mostrarResumen();
 }
 
 function mostrarSeccion() {
-    // Ocultar la sección que tenga la clase de mostrar.
     const seccionAnterior = document.querySelector('.mostrar');
-    if (seccionAnterior) {
-        seccionAnterior.classList.remove('mostrar');
-    }
+    if (seccionAnterior) seccionAnterior.classList.remove('mostrar');
 
-    // Seleccionar la sección con el paso:
     const pasoSelector = `#paso-${paso}`;
     const seccion = document.querySelector(pasoSelector);
-    seccion.classList.add('mostrar');
+    if (seccion) seccion.classList.add('mostrar');
 
-    // Ocultar el tab que tenga la clase de actual.
-    const tabAnteiror = document.querySelector('.actual');
-    if (tabAnteiror) {
-        tabAnteiror.classList.remove('actual');
-    }
+    const tabAnterior = document.querySelector('.actual');
+    if (tabAnterior) tabAnterior.classList.remove('actual');
 
-    // Resalta el tab actual:
     const tab = document.querySelector(`[data-paso="${paso}"]`);
-    tab.classList.add('actual');
+    if (tab) tab.classList.add('actual');
 }
 
 function tabs() {
-    const botones = document.querySelectorAll('.tabs button');
-
-    botones.forEach(boton => {
+    document.querySelectorAll('.tabs button').forEach(boton => {
         boton.addEventListener('click', function (e) {
             paso = parseInt(e.target.dataset.paso);
-
             mostrarSeccion();
             botonesPaginador();
         });
@@ -68,49 +59,45 @@ function tabs() {
 
 function botonesPaginador() {
     const paginaAnterior = document.querySelector('#anterior');
-    const paginaSiguite = document.querySelector('#siguiente');
+    const paginaSiguiente = document.querySelector('#siguiente');
 
     if (paso === 1) {
         paginaAnterior.classList.add('ocultar');
-        paginaSiguite.classList.remove('ocultar'); // Visible
-    } else if (paso === 3) {
-        paginaAnterior.classList.remove('ocultar'); // Visible
-        paginaSiguite.classList.add('ocultar');
+        paginaSiguiente.classList.remove('ocultar');
+    } else if (paso === 4) {
+        paginaAnterior.classList.remove('ocultar');
+        paginaSiguiente.classList.remove('ocultar'); // permite ir a 5
         mostrarResumen();
+    } else if (paso === 5) {
+        paginaAnterior.classList.remove('ocultar');
+        paginaSiguiente.classList.add('ocultar');
+        mostrarValoracion();
     } else {
-        paginaAnterior.classList.remove('ocultar'); // Visible
-        paginaSiguite.classList.remove('ocultar'); // Visible
+        paginaAnterior.classList.remove('ocultar');
+        paginaSiguiente.classList.remove('ocultar');
     }
-
     mostrarSeccion();
 }
 
 function paginaAnterior() {
-    const paginaAnterior = document.querySelector('#anterior');
-
-    paginaAnterior.addEventListener('click', function () {
+    document.querySelector('#anterior').addEventListener('click', function () {
         paso <= pasoInicial ? paso = 1 : paso--;
         botonesPaginador();
     });
 }
 
 function paginaSiguiente() {
-    const paginaSiguiente = document.querySelector('#siguiente');
-
-    paginaSiguiente.addEventListener('click', function () {
-        paso >= pasoFinal ? paso = 3 : paso++;
+    document.querySelector('#siguiente').addEventListener('click', function () {
+        paso >= pasoFinal ? paso = pasoFinal : paso++;
         botonesPaginador();
     });
 }
 
 async function consultarAPI() {
     try {
-
         const url = `${location.origin}/api/servicios`;
         const resultado = await fetch(url);
-        const servicios = await resultado.json();
-        mostrarServicios(servicios);
-
+        mostrarServicios(await resultado.json());
     } catch (error) {
         console.log(error);
     }
@@ -131,55 +118,44 @@ function mostrarServicios(servicios) {
         const servicioDiv = document.createElement('DIV');
         servicioDiv.classList.add('servicio');
         servicioDiv.dataset.idServicio = id;
-        servicioDiv.onclick = function () {
-            seleccionarServicio(servicio);
-        };
+        servicioDiv.onclick = () => seleccionarServicio(servicio);
 
         servicioDiv.appendChild(nombreServicio);
         servicioDiv.appendChild(precioServicio);
-
         document.querySelector('#servicios').appendChild(servicioDiv);
     });
 }
 
 function seleccionarServicio(servicio) {
     const { id } = servicio;
-    const { servicios } = cita;
-    // Identificar el elemento al que se le da click:
     const divServicio = document.querySelector(`[data-id-servicio='${id}'`);
-
-    // Comprobar si un servicio ya fue seleccionado:
-    if (servicios.some(agregado => agregado.id === id)) {
-        // Eliminarlo:
-        cita.servicios = servicios.filter(agregado => agregado.id != id);
+    if (cita.servicios.some(s => s.id === id)) {
+        cita.servicios = cita.servicios.filter(s => s.id !== id);
         divServicio.classList.remove('seleccionado');
     } else {
-        // Agregarlo:
-        cita.servicios = [...servicios, servicio];
+        cita.servicios.push(servicio);
         divServicio.classList.add('seleccionado');
     }
 }
 
 function idCliente() {
-    cita.id = document.querySelector('#id').value;
+    const input = document.querySelector('#id');
+    if (input) cita.id = input.value;
 }
 
 function nombreCliente() {
     const inputNombre = document.querySelector('#nombre_cliente');
-    inputNombre.addEventListener('input', function (e) {
+    if (!inputNombre) return;
+    inputNombre.addEventListener('input', e => {
         cita.nombre = e.target.value;
     });
 }
 
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
+    if (!inputFecha) return;
 
-    // Bloquear escritura manual
-    inputFecha.addEventListener('keydown', function (e) {
-        e.preventDefault();
-    });
-
-
+    inputFecha.addEventListener('keydown', e => e.preventDefault());
     inputFecha.addEventListener('input', function (e) {
         const dia = new Date(e.target.value).getUTCDay();
         if ([6, 0].includes(dia)) {
@@ -193,84 +169,53 @@ function seleccionarFecha() {
 
 function seleccionarHora() {
     const inputHora = document.querySelector('#hora');
+    if (!inputHora) return;
     inputHora.addEventListener('input', function (e) {
-        const horaCita = e.target.value;
-        const hora = horaCita.split(':')[0];
-
+        const hora = e.target.value.split(':')[0];
         if (hora < 10 || hora > 18) {
             e.target.value = '';
             mostrarAlerta('Hora no válida', 'error', '.formulario');
         } else {
-            cita.hora = horaCita;
+            cita.hora = e.target.value;
         }
     });
 }
 
 function mostrarAlerta(mensaje, tipo, elemento, desaparece = true) {
     const alertaPrevia = document.querySelector('.alerta');
+    if (alertaPrevia) alertaPrevia.remove();
 
-    // Previene que se genere más de una alerta:
-    if (alertaPrevia) {
-        alertaPrevia.remove();
-    }
-
-    // Scripting para crear una alerta:
     const alerta = document.createElement('DIV');
     alerta.textContent = mensaje;
-    alerta.classList.add('alerta');
-    alerta.classList.add(tipo);
+    alerta.classList.add('alerta', tipo);
 
-    const referencia = document.querySelector(elemento);
-    referencia.appendChild(alerta);
-
-    // Eliminar alerta:
-    if (desaparece) {
-        setTimeout(() => {
-            alerta.remove();
-        }, 3000);
-    }
+    document.querySelector(elemento).appendChild(alerta);
+    if (desaparece) setTimeout(() => alerta.remove(), 3000);
 }
 
 function mostrarResumen() {
-
     const resumen = document.querySelector('.contenido-resumen');
-    while (resumen.firstChild) {
-        resumen.removeChild(resumen.firstChild);
-    }
+    while (resumen.firstChild) resumen.removeChild(resumen.firstChild);
 
-    // Validar solo los campos requeridos
     if (cita.nombre === '' || cita.fecha === '' || cita.hora === '' || cita.servicios.length === 0) {
-        mostrarAlerta('Falta datos de servicio, fecha u hora', 'error', '.contenido-resumen', false);
+        mostrarAlerta('Faltan datos para la cita', 'error', '.contenido-resumen', false);
         return;
     }
 
-    // Formatear el div de resumen:
     const { nombre, fecha, hora, servicios } = cita;
 
-    // Heading para servicios en resumen:
     const headingServicios = document.createElement('H3');
     headingServicios.textContent = 'Resumen de Servicios';
     resumen.appendChild(headingServicios);
 
-    // Iterando y mostrando
     servicios.forEach(servicio => {
-        const { id, precio, nombre } = servicio;
-        const contenedorServicio = document.createElement('DIV');
-        contenedorServicio.classList.add('contenedor-servicio');
-
-        const textServicio = document.createElement('P');
-        textServicio.textContent = nombre;
-
-        const precioServicio = document.createElement('P');
-        precioServicio.innerHTML = `<span>Precio:</span> $${precio}`;
-
-        contenedorServicio.appendChild(textServicio);
-        contenedorServicio.appendChild(precioServicio);
-
-        resumen.appendChild(contenedorServicio);
+        const { precio, nombre } = servicio;
+        const contenedor = document.createElement('DIV');
+        contenedor.classList.add('contenedor-servicio');
+        contenedor.innerHTML = `<p>${nombre}</p><p><span>Precio:</span> $${precio}</p>`;
+        resumen.appendChild(contenedor);
     });
 
-    // Heading para cita en resumen:
     const headingCita = document.createElement('H3');
     headingCita.textContent = 'Resumen de Cita';
     resumen.appendChild(headingCita);
@@ -278,38 +223,27 @@ function mostrarResumen() {
     const nombreCliente = document.createElement('P');
     nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
 
-    // Formatear la fecha en español:
     const fechaObj = new Date(fecha);
-    const mes = fechaObj.getMonth();
-    const dia = fechaObj.getDate() + 2;
-    const year = fechaObj.getFullYear();
-
-    const fechaUTC = new Date(Date.UTC(year, mes, dia));
-    const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const fechaFofechaUrmateada = fechaUTC.toLocaleDateString('es-MX', opciones);
+    const fechaFormateada = fechaObj.toLocaleDateString('es-MX',
+        { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
     const fechaCita = document.createElement('P');
-    fechaCita.innerHTML = `<span>Fecha:</span> ${fechaFofechaUrmateada}`;
+    fechaCita.innerHTML = `<span>Fecha:</span> ${fechaFormateada}`;
 
     const horaCita = document.createElement('P');
     horaCita.innerHTML = `<span>Hora:</span> ${hora} Horas`;
 
-    // Boton para crear una cita:
     const botonReservar = document.createElement('BUTTON');
     botonReservar.classList.add('boton');
     botonReservar.textContent = 'Reservar Cita';
     botonReservar.onclick = reservarCita;
 
-    resumen.appendChild(nombreCliente);
-    resumen.appendChild(fechaCita);
-    resumen.appendChild(horaCita);
-    resumen.appendChild(botonReservar);
+    resumen.append(nombreCliente, fechaCita, horaCita, botonReservar);
 }
 
 async function reservarCita() {
     const { nombre, fecha, hora, servicios, id } = cita;
-
-    const idServicios = servicios.map(servicio => servicio.id);
+    const idServicios = servicios.map(s => s.id);
 
     const datos = new FormData();
     datos.append('nombre_cliente', nombre);
@@ -318,24 +252,9 @@ async function reservarCita() {
     datos.append('usuarioId', id);
     datos.append('servicios', idServicios);
 
-    const respuesta = await fetch('/api/citas', {
-        method: 'POST',
-        body: datos
-    });
-    const resultado = await respuesta.json();
-    console.log(resultado.nombre_cliente);
-
-    // console.log([...datos]);
-    // return;
     try {
-        // Petición hacia la API:
         const url = `${location.origin}/api/citas`;
-
-        const respuesta = await fetch(url, {
-            method: 'POST',
-            body: datos
-        });
-
+        const respuesta = await fetch(url, { method: 'POST', body: datos });
         const resultado = await respuesta.json();
 
         if (resultado.resultado) {
@@ -347,12 +266,101 @@ async function reservarCita() {
             }).then(() => setTimeout(() => window.location.reload(), 3000));
         }
     } catch (error) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Hubo un error al guardar la cita',
-            button: 'OK'
-        });
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Hubo un error al guardar la cita' });
     }
+}
 
+/* ===================== NUEVO: PAGO ===================== */
+function inicializarPago() {
+    const btn = document.getElementById('btn-pagar');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+        if (cita.servicios.length === 0) {
+            mostrarAlerta('Selecciona al menos un servicio antes de pagar',
+                          'error', '#paso-2', false);
+            return;
+        }
+
+        const nombrePago = document.getElementById('pago-nombre').value.trim();
+        if (!nombrePago) {
+            mostrarAlerta('Ingresa tu nombre', 'error', '#paso-2', false);
+            return;
+        }
+
+        const total  = cita.servicios.reduce((s, srv) => s + Number(s.precio), 0);
+        const metodo = document.getElementById('pago-metodo').value;
+
+        try {
+            const res = await fetch('/api/pagos/crear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    cita_id: 0,
+                    usuario_id: cita.id,
+                    nombre: nombrePago,
+                    monto: total,
+                    metodo: metodo
+                })
+            });
+
+            const json = await res.json();
+            document.getElementById('pago-resultado').textContent =
+                json.success ? `Pago registrado. Ref: ${json.referencia}` : `Error: ${json.error}`;
+
+            if (json.success) {
+                cita.nombre = nombrePago;
+                cita.pago = { metodo, monto: total, referencia: json.referencia };
+                paso = 3;
+                botonesPaginador();
+            }
+        } catch (err) {
+            mostrarAlerta('Error de conexión al pagar', 'error', '#paso-2', false);
+        }
+    });
+}
+
+/* ===================== NUEVO: VALORACIÓN ===================== */
+function inicializarValoracion() {
+    // Se prepara la escucha, se mostrará en mostrarValoracion
+    const btn = document.getElementById('btn-valoracion');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+        const estrellas  = document.getElementById('valoracion-estrellas').value;
+        const comentario = document.getElementById('valoracion-comentario').value;
+
+        const fechaHoraCita = new Date(`${cita.fecha}T${cita.hora}`);
+        if (fechaHoraCita > new Date()) {
+            mostrarAlerta('La cita aún no ha terminado', 'error', '#paso-5', false);
+            return;
+        }
+
+        const res = await fetch('/api/valoraciones/crear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                cita_id: cita.id,
+                usuario_id: cita.id,
+                estrellas: estrellas,
+                comentario: comentario
+            })
+        });
+        const json = await res.json();
+        document.getElementById('valoracion-resultado').textContent =
+            json.success ? '¡Gracias por tu valoración!' : `Error: ${json.error}`;
+    });
+}
+
+function mostrarValoracion() {
+    // Muestra la sección de valoración (paso 5) si ya pasó la cita
+    const seccion = document.querySelector('#paso-5');
+    if (!seccion) return;
+
+    const fechaHoraCita = new Date(`${cita.fecha}T${cita.hora}`);
+    if (fechaHoraCita <= new Date()) {
+        seccion.classList.add('mostrar');
+    } else {
+        mostrarAlerta('La cita aún no ha terminado', 'error', '#paso-5', false);
+    }
 }
