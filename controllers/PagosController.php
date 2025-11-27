@@ -9,7 +9,7 @@ use Classes\PagoService;
 class PagosController {
 
     public static function crear() {
-        // Leer el body JSON
+        // 1. Leer el input JSON
         $input = json_decode(file_get_contents('php://input'), true);
 
         $usuarioId = $input['usuario_id'] ?? null;
@@ -17,13 +17,14 @@ class PagosController {
         $monto     = $input['monto'] ?? 0;
         $metodo    = $input['metodo'] ?? 'efectivo';
 
-        // 1. Validaciones básicas
+        // 2. Validación básica de datos
         if(!$usuarioId || !$citaId || $monto <= 0) {
             echo json_encode(['success' => false, 'error' => 'Datos incompletos o monto inválido']);
             return;
         }
 
-        // 2. Integridad Referencial (Verificar que existen en BD)
+        // 3. Integridad: Verificar que la Cita y el Usuario existan en la BD
+        // Nota: Asumimos que existen los modelos Cita y Usuario con método find
         $cita = Cita::find($citaId);
         if(!$cita) {
             echo json_encode(['success' => false, 'error' => 'La cita no existe']);
@@ -36,12 +37,12 @@ class PagosController {
             return;
         }
 
-        // 3. Procesar cobro (Lógica de Negocio)
+        // 4. Lógica de Negocio: Procesar el cobro
         $estadoPago = 'pendiente';
-        $referencia = uniqid('REF_');
+        $referencia = uniqid('REF_'); // Generar referencia única
 
         if ($metodo === 'tarjeta' || $metodo === 'paypal') {
-            // Simulamos la pasarela aquí mismo en el controlador
+            // Simulamos la conexión con el banco
             $resultadoBanco = self::simularPasarelaPago($monto);
             
             if (!$resultadoBanco['aprobado']) {
@@ -51,10 +52,10 @@ class PagosController {
             $estadoPago = 'completado';
             $referencia = $resultadoBanco['transaccion_id'];
         } else {
-            $estadoPago = 'en_caja'; // Efectivo
+            $estadoPago = 'en_caja'; // Pago en efectivo
         }
 
-        // 4. Guardar en Base de Datos
+        // 5. Persistencia: Guardar el Pago
         $pago = new Pago([
             'usuario_id' => $usuarioId,
             'cita_id'    => $citaId,
@@ -70,20 +71,24 @@ class PagosController {
             echo json_encode([
                 'success' => true, 
                 'pago_id' => $resultado['id'],
-                'estado' => $estadoPago,
+                'estado'  => $estadoPago,
                 'referencia' => $referencia
             ]);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Error al guardar el pago']);
+            echo json_encode(['success' => false, 'error' => 'Error interno al guardar el pago']);
         }
     }
 
-    // Método privado auxiliar para simular el banco
+    /**
+     * Método auxiliar privado para simular una API externa (Stripe/PayPal)
+     */
     private static function simularPasarelaPago($monto) {
-        $exito = rand(1, 100) > 10; // 90% de probabilidad de éxito
+        // Simulación: 90% de probabilidad de éxito
+        $exito = rand(1, 100) > 10; 
+        
         if ($exito) {
             return ['aprobado' => true, 'transaccion_id' => 'TXN_' . bin2hex(random_bytes(8))];
         }
-        return ['aprobado' => false, 'mensaje' => 'Fondos insuficientes'];
+        return ['aprobado' => false, 'mensaje' => 'Fondos insuficientes o tarjeta rechazada'];
     }
 }

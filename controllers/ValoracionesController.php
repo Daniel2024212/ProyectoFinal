@@ -3,7 +3,7 @@ namespace Controllers\API;
 use MVC\Router;
 use Model\Valoracion;
 use Classes\ValoracionService;
-use Models\Cita;      // Nota: Namespace plural
+use Models\Cita;
 
 class ValoracionesController {
 
@@ -29,33 +29,34 @@ class ValoracionesController {
         // 2. Verificar existencia de la cita
         $cita = Cita::find($citaId);
         if(!$cita) {
-            echo json_encode(['success' => false, 'error' => 'La cita no existe']);
+            echo json_encode(['success' => false, 'error' => 'La cita especificada no existe']);
             return;
         }
 
-        // 3. Evitar duplicados (Regla de Negocio)
-        // Usamos SQL directo ya que ActiveRecord básico a veces no tiene 'where' con múltiples condiciones
+        // 3. Regla de Negocio: Evitar duplicados
+        // Verificamos si este usuario YA calificó esta cita específica.
+        // Usamos SQL directo para mayor eficiencia en la consulta compuesta.
         $query = "SELECT * FROM valoraciones WHERE cita_id = '{$citaId}' AND usuario_id = '{$usuarioId}' LIMIT 1";
         $existe = Valoracion::SQL($query);
 
         if(!empty($existe)) {
-            echo json_encode(['success' => false, 'error' => 'Ya valoraste esta cita anteriormente']);
+            echo json_encode(['success' => false, 'error' => 'Ya has valorado esta cita anteriormente']);
             return;
         }
 
-        // 4. Guardar
+        // 4. Guardar y Sanitizar
         $valoracion = new Valoracion([
             'usuario_id' => $usuarioId,
             'cita_id'    => $citaId,
             'estrellas'  => $estrellas,
-            'comentario' => htmlspecialchars($comentario) // Sanitizar HTML básico
+            'comentario' => htmlspecialchars($comentario) // Sanitizar HTML para evitar XSS
         ]);
 
         $resultado = $valoracion->guardar();
 
         echo json_encode([
             'success' => $resultado['resultado'],
-            'mensaje' => $resultado['resultado'] ? 'Valoración guardada' : 'Error al guardar'
+            'mensaje' => $resultado['resultado'] ? 'Valoración guardada correctamente' : 'Error al guardar'
         ]);
     }
 }
