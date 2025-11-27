@@ -1,14 +1,14 @@
 let paso = 1;
 const pasoInicial = 1;
-const pasoFinal = 5;
+const pasoFinal = 3; // CAMBIO: El último paso ahora es el 4 (Pago)
 
 const cita = {
-    id: '', // Se llena al iniciar sesión
+    id: '',
     nombre: '',
     fecha: '',
     hora: '',
     servicios: [],
-    citaIdGenerada: null // Guardaremos el ID que devuelva el Microservicio de Citas
+    citaIdGenerada: null 
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,35 +16,31 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function iniciarApp() {
-    mostrarSeccion(); // Muestra el paso actual
-    tabs(); // Listeners para los tabs
-    botonesPaginador(); // Listeners para Anterior/Siguiente
+    mostrarSeccion();
+    tabs();
+    botonesPaginador();
     paginaSiguiente();
     paginaAnterior();
 
-    consultarAPI(); // Carga servicios del backend
+    consultarAPI();
 
     idCliente();
     nombreCliente();
     seleccionarFecha();
     seleccionarHora();
 
-    // Listeners para los botones de acción final de cada microservicio
     listenerPagar();
-    listenerValorar();
+    // SE ELIMINÓ listenerValorar();
 }
 
 function mostrarSeccion() {
-    // Ocultar sección previa
     const seccionAnterior = document.querySelector('.mostrar');
     if(seccionAnterior) seccionAnterior.classList.remove('mostrar');
 
-    // Mostrar sección actual por ID
     const pasoSelector = `#paso-${paso}`;
     const seccion = document.querySelector(pasoSelector);
     seccion.classList.add('mostrar');
 
-    // Resaltar Tab actual
     const tabAnterior = document.querySelector('.actual');
     if(tabAnterior) tabAnterior.classList.remove('actual');
 
@@ -56,16 +52,11 @@ function tabs() {
     const botones = document.querySelectorAll('.tabs button');
     botones.forEach(boton => {
         boton.addEventListener('click', function(e) {
-            // Evitar saltar pasos sin completar la lógica (ej. no ir a pago sin cita)
             const pasoDeseado = parseInt(e.target.dataset.paso);
             
-            // Validación simple de flujo
-            if(pasoDeseado === 4 && !cita.citaIdGenerada) {
+            // Validación para evitar saltar al pago sin crear la cita
+            if(pasoDeseado === 3 && !cita.citaIdGenerada) {
                 Swal.fire('Atención', 'Debes confirmar la cita en el Resumen antes de pagar', 'warning');
-                return;
-            }
-            if(pasoDeseado === 5 && !cita.citaIdGenerada) {
-                Swal.fire('Atención', 'Debes completar el pago primero', 'warning');
                 return;
             }
 
@@ -92,10 +83,9 @@ function botonesPaginador() {
     }
 
     if(paso === 3) {
-        mostrarResumen(); // Cargar resumen al llegar al paso 3
+        mostrarResumen();
     }
     
-    // Calcular total si estamos en paso de pago
     if(paso === 4) {
         calcularTotalPago();
     }
@@ -161,17 +151,12 @@ function mostrarServicios(servicios) {
 function seleccionarServicio(servicio) {
     const {id} = servicio;
     const {servicios} = cita;
-
-    // Identificar el elemento al que se le da click
     const divServicio = document.querySelector(`[data-id-servicio="${id}"]`);
 
-    // Comprobar si un servicio ya fue agregado
     if( servicios.some( agregado => agregado.id === id ) ) {
-        // Eliminarlo
         cita.servicios = servicios.filter( agregado => agregado.id !== id );
         divServicio.classList.remove('seleccionado');
     } else {
-        // Agregarlo
         cita.servicios = [...servicios, servicio];
         divServicio.classList.add('seleccionado');
     }
@@ -233,7 +218,6 @@ function mostrarAlerta(mensaje, tipo, elemento, desaparece = true) {
 function mostrarResumen() {
     const resumen = document.querySelector('.contenido-resumen');
 
-    // Limpiar contenido previo
     while(resumen.firstChild) {
         resumen.removeChild(resumen.firstChild);
     }
@@ -243,7 +227,6 @@ function mostrarResumen() {
         return;
     }
 
-    // Formatear el div de resumen
     const {nombre, fecha, hora, servicios} = cita;
 
     const headingServicios = document.createElement('H3');
@@ -273,7 +256,6 @@ function mostrarResumen() {
     const nombreCliente = document.createElement('P');
     nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
 
-    // Formatear la fecha en español
     const fechaObj = new Date(fecha);
     const mes = fechaObj.getMonth();
     const dia = fechaObj.getDate() + 2;
@@ -288,7 +270,6 @@ function mostrarResumen() {
     const horaCita = document.createElement('P');
     horaCita.innerHTML = `<span>Hora:</span> ${hora} Horas`;
 
-    // Botón para Crear Cita
     const botonReservar = document.createElement('BUTTON');
     botonReservar.classList.add('boton');
     botonReservar.textContent = 'Confirmar Cita';
@@ -301,7 +282,6 @@ function mostrarResumen() {
 }
 
 async function reservarCita() {
-    // 1. LLAMADA AL MICROSERVICIO DE CITAS
     const {nombre, fecha, hora, servicios, id} = cita;
     const idServicios = servicios.map( servicio => servicio.id );
 
@@ -312,7 +292,6 @@ async function reservarCita() {
     datos.append('servicios', idServicios);
 
     try {
-        // Petición hacia la API Gateway (Controller)
         const url = '/api/citas';
         const respuesta = await fetch(url, {
             method: 'POST',
@@ -322,17 +301,15 @@ async function reservarCita() {
         const resultado = await respuesta.json();
 
         if(resultado.resultado) {
-            // Guardamos el ID que nos devolvió el servicio para usarlo en Pagos y Valoraciones
             cita.citaIdGenerada = resultado.id; 
             
             Swal.fire({
                 icon: 'success',
                 title: 'Cita Creada',
-                text: 'Tu cita fue creada correctamente. Ahora procede al pago.',
+                text: 'Tu cita fue creada correctamente. ID: ' + resultado.id,
                 button: 'OK'
             }).then( () => {
-                // Avanzamos automáticamente al paso de Pago
-                paso = 4;
+                paso = 3;
                 mostrarSeccion();
                 botonesPaginador();
             });
@@ -344,105 +321,4 @@ async function reservarCita() {
             text: 'Hubo un error al guardar la cita'
         });
     }
-}
-
-function calcularTotalPago() {
-    // Sumar precios de servicios seleccionados
-    const total = cita.servicios.reduce( (total, servicio) => total + parseFloat(servicio.precio), 0 );
-    const totalParrafo = document.querySelector('#pago-total');
-    totalParrafo.textContent = `$${total.toFixed(2)}`;
-}
-
-function listenerPagar() {
-    const btnPagar = document.querySelector('#btn-pagar');
-    btnPagar.addEventListener('click', async () => {
-        
-        // Validaciones previas
-        if(!cita.citaIdGenerada) {
-            Swal.fire('Error', 'No hay una cita creada para pagar', 'error');
-            return;
-        }
-
-        const metodoPago = document.querySelector('#metodo-pago').value;
-        if(!metodoPago) {
-            Swal.fire('Error', 'Selecciona un método de pago', 'error');
-            return;
-        }
-
-        const total = cita.servicios.reduce( (acc, curr) => acc + parseFloat(curr.precio), 0 );
-
-        // 2. LLAMADA AL MICROSERVICIO DE PAGOS
-        const datosPago = {
-            usuario_id: cita.id,
-            cita_id: cita.citaIdGenerada,
-            monto: total,
-            metodo: metodoPago
-        };
-
-        try {
-            const url = '/api/pagos/crear';
-            const respuesta = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datosPago)
-            });
-            const resultado = await respuesta.json();
-
-            if(resultado.success) {
-                Swal.fire('Pago Exitoso', `Referencia: ${resultado.referencia}`, 'success')
-                    .then(() => {
-                        // Avanzamos a valoración
-                        paso = 5; 
-                        mostrarSeccion();
-                        botonesPaginador();
-                    });
-            } else {
-                Swal.fire('Error en Pago', resultado.error || 'No se pudo procesar', 'error');
-            }
-
-        } catch (error) {
-            console.log(error);
-        }
-    });
-}
-
-function listenerValorar() {
-    const btnValorar = document.querySelector('#btn-valorar');
-    btnValorar.addEventListener('click', async () => {
-        
-        if(!cita.citaIdGenerada) return;
-
-        const estrellas = document.querySelector('#estrellas').value;
-        const comentario = document.querySelector('#comentario').value;
-
-        // 3. LLAMADA AL MICROSERVICIO DE FEEDBACK
-        const datosValoracion = {
-            usuario_id: cita.id,
-            cita_id: cita.citaIdGenerada,
-            estrellas: estrellas,
-            comentario: comentario
-        };
-
-        try {
-            const url = '/api/valoraciones/crear';
-            const respuesta = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(datosValoracion)
-            });
-            const resultado = await respuesta.json();
-
-            if(resultado.success) {
-                Swal.fire('Gracias', 'Tu valoración ha sido guardada', 'success')
-                    .then(() => {
-                        window.location.reload(); // Reiniciar app para nueva cita
-                    });
-            } else {
-                Swal.fire('Error', resultado.error || 'No se pudo guardar la valoración', 'error');
-            }
-
-        } catch (error) {
-            console.log(error);
-        }
-    });
 }
