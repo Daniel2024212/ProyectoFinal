@@ -5,6 +5,8 @@ namespace Controllers;
 use Models\Cita;
 use Models\CitaServicio;
 use Models\Servicio;
+use classes\CatalogoService;
+use classes\CitaService;
 
 class APIController
 {

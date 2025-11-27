@@ -6,6 +6,7 @@ use Classes\Email;
 use Models\Usuario;
 use Models\Token;
 use MVC\Router;
+use Classes\AuthService;
 
 class LoginController {
 

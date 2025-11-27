@@ -2,6 +2,7 @@
 namespace Controllers\API;
 use MVC\Router;
 use Model\Pago;
+use Classes\PagoService;
 
 class PagosController {
     public static function crear() {
