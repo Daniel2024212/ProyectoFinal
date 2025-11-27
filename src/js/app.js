@@ -85,10 +85,6 @@ function botonesPaginador() {
     if(paso === 3) {
         mostrarResumen();
     }
-    
-    if(paso === 4) {
-        calcularTotalPago();
-    }
 }
 
 function paginaAnterior() {

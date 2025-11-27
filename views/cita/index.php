@@ -45,28 +45,6 @@
         <p class="text-center">Verifica tu información antes de confirmar</p>
     </div>
 
-    <div id="paso-4" class="seccion">
-        <h2>Realizar Pago</h2>
-        <p class="text-center">Confirma el pago de tu cita</p>
-        
-        <div class="formulario" style="max-width: 60rem; margin: 0 auto;">
-            <div class="campo" style="justify-content: space-between; background-color: #fff; padding: 1rem; border-radius: 1rem;">
-                <label style="color: #000; font-weight: bold;">Total a Pagar:</label>
-                <p id="pago-total" style="font-size: 2.2rem; font-weight: 900; margin: 0; color: #0da6f3;">$0.00</p>
-            </div>
-        </div>
-
-        <div class="alinear-centro" style="margin-top: 3rem; text-align: center;">
-            <button type="button" id="btn-pagar" class="boton">Finalizar Cita</button>
-        </div>
-    </div>
-
-    <div class="paginacion">
-        <button id="anterior" class="boton">&laquo; Anterior</button>
-        <button id="siguiente" class="boton">Siguiente &raquo;</button>
-    </div>
-</div>
-
 <?php 
     $script = "
         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
