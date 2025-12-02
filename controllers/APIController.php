@@ -5,15 +5,32 @@ namespace Controllers;
 use Models\Cita;          // <--- IMPORTANTE: Esto faltaba y causaba el Error 500
 use Models\CitaServicio;
 use Models\Servicio;
+use Classes\AuthService;
 
-class APIController {
+class APIController{
+    // Dentro de la clase APIController:
+    public static function login()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $email = $_POST['email'];
+            $password = $_POST['password'];
 
-    public static function index() {
+            // Instanciamos el microservicio
+            $auth = new AuthService();
+            $resultado = $auth->autenticar($email, $password);
+
+            echo json_encode($resultado);
+        }
+    }
+
+    public static function index()
+    {
         $servicios = Servicio::all();
         echo json_encode($servicios);
     }
 
-    public static function guardar() {
+    public static function guardar()
+    {
         // Almacena la Cita y devuelve el ID
         $cita = new Cita($_POST);
         $resultado = $cita->guardar();
@@ -23,7 +40,7 @@ class APIController {
         // Almacena los Servicios con la Cita
         $idServicios = explode(",", $_POST['servicios']);
 
-        foreach($idServicios as $idServicio) {
+        foreach ($idServicios as $idServicio) {
             $args = [
                 'citaId' => $id,
                 'servicioId' => $idServicio
@@ -35,8 +52,9 @@ class APIController {
         echo json_encode(['resultado' => $resultado]);
     }
 
-    public static function eliminar() {
-        if($_SERVER['REQUEST_METHOD'] === 'POST') {
+    public static function eliminar()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'];
             $cita = Cita::find($id);
             $cita->eliminar();
@@ -44,7 +62,8 @@ class APIController {
         }
     }
 
-    public static function programadas() {
+    public static function programadas()
+    {
         // Obtenemos la fecha actual del servidor en formato YYYY-MM-DD
         $fechaActual = date('Y-m-d');
 
@@ -55,7 +74,7 @@ class APIController {
         try {
             // Ejecutamos la consulta usando el modelo Cita
             $citas = Cita::SQL($consulta);
-            
+
             echo json_encode($citas);
         } catch (\Exception $e) {
             echo json_encode(['error' => $e->getMessage()]);
