@@ -8,21 +8,6 @@ use Models\Servicio;
 use Classes\AuthService;
 
 class APIController{
-    // Dentro de la clase APIController:
-    public static function login()
-    {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = $_POST['email'];
-            $password = $_POST['password'];
-
-            // Instanciamos el microservicio
-            $auth = new AuthService();
-            $resultado = $auth->autenticar($email, $password);
-
-            echo json_encode($resultado);
-        }
-    }
-
     public static function index()
     {
         $servicios = Servicio::all();
@@ -78,6 +63,26 @@ class APIController{
             echo json_encode($citas);
         } catch (\Exception $e) {
             echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    public static function login() {
+        // Permitimos GET para probar en navegador
+        if($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET') {
+            
+            // Si es GET (navegador), usamos datos de prueba falsos
+            // Si es POST (app real), usamos lo que viene en el formulario
+            $email = $_POST['email'] ?? 'correo@prueba.com';
+            $password = $_POST['password'] ?? '123456';
+
+            // Instanciamos el microservicio AuthService
+            $auth = new AuthService();
+            
+            // Intentamos autenticar
+            // NOTA: Asegúrate de tener un usuario real en tu BD con estos datos para que salga "true"
+            $resultado = $auth->autenticar($email, $password);
+
+            echo json_encode($resultado);
         }
     }
 }
