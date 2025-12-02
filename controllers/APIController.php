@@ -2,52 +2,67 @@
 
 namespace Controllers;
 
-use Models\Cita;
+use Models\Cita;          // <--- IMPORTANTE: Esto faltaba y causaba el Error 500
 use Models\CitaServicio;
 use Models\Servicio;
 
-class APIController
-{
-    public static function index()
-    {
+class APIController {
+
+    public static function index() {
         $servicios = Servicio::all();
         echo json_encode($servicios);
     }
 
-    public static function guardar()
-    {
-        // 1. Almacena la Cita
+    public static function guardar() {
+        // Almacena la Cita y devuelve el ID
         $cita = new Cita($_POST);
-        $resultado = $cita->guardar(); // Devuelve ['resultado'=>true, 'id'=>123]
+        $resultado = $cita->guardar();
 
-        $citaId = $resultado['id'];
+        $id = $resultado['id'];
 
-        // 2. Almacena los Servicios
-        $idServicios = explode(',', $_POST['servicios']);
-        foreach ($idServicios as $idServicio) {
+        // Almacena los Servicios con la Cita
+        $idServicios = explode(",", $_POST['servicios']);
+
+        foreach($idServicios as $idServicio) {
             $args = [
-                'citaId' => $citaId,
+                'citaId' => $id,
                 'servicioId' => $idServicio
             ];
             $citaServicio = new CitaServicio($args);
             $citaServicio->guardar();
         }
 
-        // CORRECCIÓN IMPORTANTE:
-        // Devolvemos el array $resultado directamente para que JS pueda leer 'id' y 'resultado' sin problemas.
-        echo json_encode([
-            'resultado' => $resultado['resultado'],
-            'id' => $resultado['id'] // Esto es lo que faltaba para que funcione el pago
-        ]);
+        echo json_encode(['resultado' => $resultado]);
     }
 
-    public static function eliminar()
-    {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    public static function eliminar() {
+        if($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'];
             $cita = Cita::find($id);
             $cita->eliminar();
-            header('Location: ' . $_SERVER['HTTP_REFERER']);
+            header('Location:' . $_SERVER['HTTP_REFERER']);
+        }
+    }
+
+    // --- ESTA ES LA FUNCIÓN QUE TE FALTA O TIENE ERROR ---
+    public static function programadas() {
+        $fecha = $_GET['fecha'] ?? null;
+
+        if(!$fecha) {
+            echo json_encode([]);
+            return;
+        }
+
+        // Consulta SQL segura
+        $fecha = filter_var($fecha, FILTER_SANITIZE_STRING);
+        $consulta = "SELECT hora FROM citas WHERE fecha = '" . $fecha . "'";
+
+        try {
+            // Requiere que tengas el modelo Cita importado arriba
+            $citas = Cita::SQL($consulta);
+            echo json_encode($citas);
+        } catch (\Exception $e) {
+            echo json_encode(['error' => $e->getMessage()]);
         }
     }
 }
