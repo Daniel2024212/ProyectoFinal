@@ -44,22 +44,18 @@ class APIController {
         }
     }
 
-    // --- ESTA ES LA FUNCIÓN QUE TE FALTA O TIENE ERROR ---
     public static function programadas() {
-        $fecha = $_GET['fecha'] ?? null;
+        // Obtenemos la fecha actual del servidor en formato YYYY-MM-DD
+        $fechaActual = date('Y-m-d');
 
-        if(!$fecha) {
-            echo json_encode([]);
-            return;
-        }
-
-        // Consulta SQL segura
-        $fecha = filter_var($fecha, FILTER_SANITIZE_STRING);
-        $consulta = "SELECT hora FROM citas WHERE fecha = '" . $fecha . "'";
+        // Consulta: Traer todas las citas cuya fecha sea igual o mayor a hoy
+        // Ordenamos por fecha y hora para que salgan en orden cronológico
+        $consulta = "SELECT * FROM citas WHERE fecha >= '${fechaActual}' ORDER BY fecha ASC, hora ASC";
 
         try {
-            // Requiere que tengas el modelo Cita importado arriba
+            // Ejecutamos la consulta usando el modelo Cita
             $citas = Cita::SQL($consulta);
+            
             echo json_encode($citas);
         } catch (\Exception $e) {
             echo json_encode(['error' => $e->getMessage()]);
