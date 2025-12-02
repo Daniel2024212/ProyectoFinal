@@ -45,8 +45,8 @@ $router->post('/api/eliminar', [APIController::class, 'eliminar']);
 
 // Consultar Citas Programadas (Filtro por Fecha)
 $router->get('/api/citas/programadas', [APIController::class, 'programadas']);
-// Login API (Microservicio de Autenticación)
-$router->post('/api/auth/login', [APIController::class, 'login']);
+// AHORA (Para probar en el navegador):
+$router->get('/api/auth/login', [APIController::class, 'login']);
 
 // CRUD de servicios:
 $router->get('/servicios', [ServicioController::class, 'index']);
