@@ -3,14 +3,13 @@ namespace Classes;
 
 use Models\Cita;
 use Models\CitaServicio;
-use Models\AdminCita;
+use Models\AdminCita; // Modelo para consultas complejas
 
 class CitaService {
-    /**
-     * Crea la cita y guarda los servicios asociados.
-     */
+    
+    // Crear una nueva reserva
     public static function agendarCita(array $datos): array {
-        // 1. Guardar Cabecera
+        // 1. Guardar la Cabecera de la Cita
         $cita = new Cita($datos);
         $resultado = $cita->guardar();
 
@@ -19,9 +18,11 @@ class CitaService {
         }
 
         $citaId = $resultado['id'];
-        
-        // 2. Guardar Detalle (Servicios)
+
+        // 2. Guardar los detalles (Servicios solicitados)
+        // Recibe string "1,2,4" y lo convierte en array
         $serviciosId = explode(",", $datos['servicios']); 
+        
         foreach($serviciosId as $idServicio) {
             $citaServicio = new CitaServicio([
                 'citaId' => $citaId,
@@ -33,7 +34,9 @@ class CitaService {
         return ['success' => true, 'cita_id' => $citaId];
     }
 
+    // Consultar agenda por fecha (Para el Admin)
     public static function obtenerAgendaPorFecha($fecha) {
+        // Consulta SQL optimizada que une tablas
         $consulta = "SELECT citas.id, citas.hora, CONCAT( usuarios.nombre, ' ', usuarios.apellido) as cliente, ";
         $consulta .= " usuarios.email, usuarios.telefono, servicios.nombre as servicio, servicios.precio  ";
         $consulta .= " FROM citas  ";
@@ -43,10 +46,5 @@ class CitaService {
         $consulta .= " WHERE fecha =  '{$fecha}' ";
 
         return AdminCita::SQL($consulta);
-    }
-    
-    public static function eliminarCita($id) {
-        $cita = Cita::find($id);
-        $cita->eliminar();
     }
 }
