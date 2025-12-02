@@ -38,12 +38,8 @@ $router->get('/admin', [AdminController::class, 'index']);
 
 // API de Citas:
 $router->get('/api/servicios', [APIController::class, 'index']);
-$router->post('/api/citas', [APIController::class, 'guardar']);
+$router->post('/api/citas', [APIController::class, 'guardar']); // POST para guardar
 $router->post('/api/eliminar', [APIController::class, 'eliminar']);
-
-$router->post('/api/pagos/crear', [Controllers\API\PagosController::class, 'crear']);
-$router->post('/api/valoraciones/crear', [Controllers\API\ValoracionesController::class, 'crear']);
-
 
 // CRUD de servicios:
 $router->get('/servicios', [ServicioController::class, 'index']);
