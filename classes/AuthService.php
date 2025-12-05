@@ -2,46 +2,44 @@
 
 namespace Classes;
 
+// --- AGREGA ESTA LÍNEA PARA SOLUCIONAR EL ERROR ---
+// Esto busca el archivo Usuario.php manualmente en la carpeta models
+if(file_exists(__DIR__ . '/../models/Usuario.php')) {
+    require_once __DIR__ . '/../models/Usuario.php';
+}
+// ---------------------------------------------------
+
 use Models\Usuario;
 
 class AuthService {
 
     public function autenticar($email, $password) {
         
-        // Verificamos que el modelo Usuario exista y tenga el método SQL
+        // Verificamos si logramos cargar la clase
         if(!class_exists('Model\Usuario')) {
-            return ['error' => 'Error Crítico: No se encuentra el Modelo Usuario'];
+            // Si entra aquí, significa que NO tienes el archivo Usuario.php
+            // o se llama diferente (ej: usuario.php en minúsculas)
+            return ['error' => 'Error Crítico: No se encuentra el archivo models/Usuario.php. Revisa que exista y tenga la U mayúscula.'];
         }
 
-        // Consulta SQL directa para evitar errores de métodos 'where' no existentes
-        // Escapamos los datos para seguridad básica
+        // ... El resto de tu código sigue igual ...
+        
         $query = "SELECT * FROM usuarios WHERE email = '" . $email . "' LIMIT 1";
 
-        // Ejecutar consulta (Ajusta 'SQL' si tu método se llama 'consultarSQL')
         try {
             $resultado = Usuario::SQL($query);
         } catch (\Exception $e) {
-            return ['error' => 'Error de Base de Datos: ' . $e->getMessage()];
+            return ['error' => 'Error BD: ' . $e->getMessage()];
         }
 
-        // Si el array está vacío, el usuario no existe
         if(empty($resultado)) {
-            return [
-                'resultado' => false,
-                'error' => 'El usuario no existe'
-            ];
+            return ['resultado' => false, 'error' => 'El usuario no existe'];
         }
 
-        // Obtenemos el primer resultado (Objeto Usuario)
         $usuario = array_shift($resultado);
 
-        // Validar Password
         if(password_verify($password, $usuario->password)) {
-            
-            // Iniciar sesión
-            if(!isset($_SESSION)) {
-                session_start();
-            }
+            if(!isset($_SESSION)) session_start();
             
             $_SESSION['id'] = $usuario->id;
             $_SESSION['nombre'] = $usuario->nombre;
@@ -53,17 +51,13 @@ class AuthService {
             }
 
             return [
-                'resultado' => true,
+                'resultado' => true, 
                 'mensaje' => 'Login Exitoso',
                 'token' => uniqid(),
                 'usuario' => $usuario->nombre
             ];
-
         } else {
-            return [
-                'resultado' => false,
-                'error' => 'Password incorrecto'
-            ];
+            return ['resultado' => false, 'error' => 'Password incorrecto'];
         }
     }
 }
