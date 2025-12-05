@@ -6,6 +6,8 @@ namespace Controllers;
 use Models\Cita;
 use Models\CitaServicio;
 use Models\Servicio;
+require_once __DIR__ . '/../classes/EmailService.php'; 
+use Classes\EmailService;
 
 // --- CORRECCIÓN IMPORTANTE PARA PANTALLA BLANCA ---
 // Cargamos el archivo manualmente porque el autoloader podría no ver la carpeta 'classes'

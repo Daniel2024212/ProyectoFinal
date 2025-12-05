@@ -46,7 +46,10 @@ $router->get('/api/auth/login', [APIController::class, 'login']);
 $router->get('/api/auth/login', [APIController::class, 'login']);
 // También agregamos POST para cuando uses la App real
 $router->post('/api/auth/login', [APIController::class, 'login']);
+$router->get('/api/notificar', [APIController::class, 'notificar']);
 
+// POST: Para usarlo desde tu App o Postman (más seguro)
+$router->post('/api/notificar', [APIController::class, 'notificar']);
 
 // CRUD de servicios:
 $router->get('/servicios', [ServicioController::class, 'index']);
