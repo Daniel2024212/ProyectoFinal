@@ -38,15 +38,15 @@ $router->get('/admin', [AdminController::class, 'index']);
 
 // API de Citas:
 $router->get('/api/servicios', [APIController::class, 'index']);
-$router->post('/api/citas', [APIController::class, 'guardar']);
-
-// Eliminar Cita (Admin)
-$router->post('/api/eliminar', [APIController::class, 'eliminar']);
-
 // Consultar Citas Programadas (Filtro por Fecha)
 $router->get('/api/citas/programadas', [APIController::class, 'programadas']);
 // AHORA (Para probar en el navegador):
 $router->get('/api/auth/login', [APIController::class, 'login']);
+// --- NUEVA RUTA MICROSERVICIO AUTH (Con GET para probar) ---
+$router->get('/api/auth/login', [APIController::class, 'login']);
+// También agregamos POST para cuando uses la App real
+$router->post('/api/auth/login', [APIController::class, 'login']);
+
 
 // CRUD de servicios:
 $router->get('/servicios', [ServicioController::class, 'index']);
