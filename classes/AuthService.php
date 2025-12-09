@@ -2,29 +2,40 @@
 
 namespace Classes;
 
+// --- PROTECCIÓN: Importación manual del Modelo ---
+// Esto asegura que el servidor encuentre el archivo aunque falle el Autoload
+if(file_exists(__DIR__ . '/../models/Usuario.php')) {
+    require_once __DIR__ . '/../models/Usuario.php';
+}
+
 use Models\Usuario;
 
 class AuthService {
 
     public function autenticar($email, $password) {
         
-        // Verificamos que el modelo Usuario exista y tenga el método SQL
+        // 1. Verificación de seguridad: ¿Existe la clase Usuario?
         if(!class_exists('Model\Usuario')) {
-            return ['error' => 'Error Crítico: No se encuentra el Modelo Usuario'];
+            return [
+                'resultado' => false,
+                'error' => 'Error del Servidor: No se cargó el modelo Usuario. Revisa que el archivo models/Usuario.php exista y empiece con mayúscula.'
+            ];
         }
 
-        // Consulta SQL directa para evitar errores de métodos 'where' no existentes
-        // Escapamos los datos para seguridad básica
+        // 2. Buscar usuario por email
+        // Usamos una consulta SQL directa para evitar fallos de métodos mágicos
         $query = "SELECT * FROM usuarios WHERE email = '" . $email . "' LIMIT 1";
 
-        // Ejecutar consulta (Ajusta 'SQL' si tu método se llama 'consultarSQL')
         try {
             $resultado = Usuario::SQL($query);
         } catch (\Exception $e) {
-            return ['error' => 'Error de Base de Datos: ' . $e->getMessage()];
+            return [
+                'resultado' => false,
+                'error' => 'Error de Base de Datos: ' . $e->getMessage()
+            ];
         }
 
-        // Si el array está vacío, el usuario no existe
+        // 3. Verificar si el usuario existe
         if(empty($resultado)) {
             return [
                 'resultado' => false,
@@ -32,37 +43,38 @@ class AuthService {
             ];
         }
 
-        // Obtenemos el primer resultado (Objeto Usuario)
+        // Active Record devuelve un array, tomamos el primer elemento (el usuario)
         $usuario = array_shift($resultado);
 
-        // Validar Password
+        // 4. Verificar Password
         if(password_verify($password, $usuario->password)) {
             
-            // Iniciar sesión
+            // Iniciar sesión en el servidor
             if(!isset($_SESSION)) {
                 session_start();
             }
-            
+
             $_SESSION['id'] = $usuario->id;
-            $_SESSION['nombre'] = $usuario->nombre;
+            $_SESSION['nombre'] = $usuario->nombre . " " . $usuario->apellido;
             $_SESSION['email'] = $usuario->email;
             $_SESSION['login'] = true;
-            
-            if(isset($usuario->admin) && $usuario->admin === "1") {
+
+            // Verificar si es admin
+            if($usuario->admin === "1") {
                 $_SESSION['admin'] = true;
             }
 
             return [
                 'resultado' => true,
-                'mensaje' => 'Login Exitoso',
-                'token' => uniqid(),
-                'usuario' => $usuario->nombre
+                'mensaje' => 'Login Correcto',
+                'usuario' => $usuario->nombre,
+                'token' => uniqid() // Token simulado para la API
             ];
 
         } else {
             return [
                 'resultado' => false,
-                'error' => 'Password incorrecto'
+                'error' => 'El password es incorrecto'
             ];
         }
     }

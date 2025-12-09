@@ -56,21 +56,17 @@ class APIController {
         }
     }
 
-    // --- NUEVO MÉTODO DE LOGIN ---
+    // En Controllers/APIController.php
+
     public static function login() {
+        // Importar manualmente para evitar errores
+        require_once __DIR__ . '/../classes/AuthService.php';
         
-        // Aceptamos GET (para probar en navegador) y POST (para la App)
-        if($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET') {
-            
-            // Datos por defecto para probar si entras por URL sin datos
-            // CAMBIA ESTOS DATOS por un usuario real de tu BD para que de TRUE
-            $email = $_POST['email'] ?? $_GET['email'] ?? 'correo@correo.com'; 
-            $password = $_POST['password'] ?? $_GET['password'] ?? '123456';
+        $email = $_REQUEST['email'] ?? '';
+        $password = $_REQUEST['password'] ?? '';
 
-            $auth = new AuthService();
-            $respuesta = $auth->autenticar($email, $password);
-
-            echo json_encode($respuesta);
-        }
+        $auth = new \Classes\AuthService();
+        echo json_encode($auth->autenticar($email, $password));
     }
+    
 }
