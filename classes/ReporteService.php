@@ -14,7 +14,7 @@ class ReporteService {
     public function generarResumenDiario() {
         
         // Verificamos que el modelo exista para no romper la API
-        if(!class_exists('Model\Cita')) {
+        if(!class_exists('Models\Cita')) {
             return ['error' => 'No se pudo cargar el Modelo Cita'];
         }
 

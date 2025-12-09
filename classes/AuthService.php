@@ -13,7 +13,7 @@ use Models\Usuario;
 class AuthService {
     public function login($email, $password) {
         // 1. Verificar si el modelo cargó correctamente
-        if(!class_exists('Model\Usuario')) {
+        if(!class_exists('Models\Usuario')) {
             return ['resultado' => false, 'error' => 'Error crítico: No se encuentra el Modelo Usuario'];
         }
 
