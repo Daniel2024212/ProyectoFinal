@@ -34,26 +34,48 @@ class APIController {
 
     public static function guardar() {
         
-        // 1. Guardar la Cita
-        $cita = new Cita($_POST);
-        $resultado = $cita->guardar();
-        $id = $resultado['id'];
-
-        // 2. Guardar los Servicios de la Cita
-        // Convertimos el string "1,2,3" a un arreglo
-        $idServicios = explode(",", $_POST['servicios']);
-
-        foreach($idServicios as $idServicio) {
-            $args = [
-                'citaId' => $id,
-                'servicioId' => $idServicio
-            ];
-            $citaServicio = new CitaServicio($args);
-            $citaServicio->guardar();
+        // 1. Verificar si la clase Cita existe (Error común de Namespace)
+        if(!class_exists('Model\Cita')) {
+            echo json_encode(['resultado' => false, 'error' => 'No se encuentra la clase Model\Cita. Revisa el namespace en models/Cita.php']);
+            return;
         }
 
-        // Retornar respuesta
-        echo json_encode(['resultado' => $resultado]);
+        try {
+            // 2. Intentar guardar la Cita
+            $cita = new Cita($_POST);
+            $resultado = $cita->guardar();
+
+            // Si falla el guardado (ej: error SQL), el resultado suele traer un error
+            if(isset($resultado['error'])) {
+                 echo json_encode(['resultado' => false, 'error' => 'Error BD Cita: ' . $resultado['error']]);
+                 return;
+            }
+
+            $id = $resultado['id'];
+
+            // 3. Intentar guardar los Servicios
+            $idServicios = explode(",", $_POST['servicios']);
+            foreach($idServicios as $idServicio) {
+                $args = [
+                    'citaId' => $id,
+                    'servicioId' => $idServicio
+                ];
+                $citaServicio = new CitaServicio($args);
+                $citaServicio->guardar();
+            }
+
+            // ÉXITO
+            echo json_encode(['resultado' => $resultado]);
+
+        } catch (\Throwable $e) {
+            // CAPTURA DE ERRORES FATALES
+            echo json_encode([
+                'resultado' => false, 
+                'error' => 'Error PHP: ' . $e->getMessage(),
+                'archivo' => $e->getFile(),
+                'linea' => $e->getLine()
+            ]);
+        }
     }
 
     public static function eliminar() {
