@@ -36,6 +36,8 @@ $router->get('/mensaje', [LoginController::class, 'mensaje']);
 $router->get('/cita', [CitaController::class, 'index']);
 $router->get('/admin', [AdminController::class, 'index']);
 
+$router->post('/api/citas', [APIController::class, 'guardar']);
+
 // API de Citas:
 $router->get('/api/servicios', [APIController::class, 'index']);
 // Consultar Citas Programadas (Filtro por Fecha)
