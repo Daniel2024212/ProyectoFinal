@@ -33,16 +33,26 @@ class APIController {
     }
 
     public static function guardar() {
+        
+        // 1. Guardar la Cita
         $cita = new Cita($_POST);
         $resultado = $cita->guardar();
         $id = $resultado['id'];
 
+        // 2. Guardar los Servicios de la Cita
+        // Convertimos el string "1,2,3" a un arreglo
         $idServicios = explode(",", $_POST['servicios']);
+
         foreach($idServicios as $idServicio) {
-            $args = ['citaId' => $id, 'servicioId' => $idServicio];
+            $args = [
+                'citaId' => $id,
+                'servicioId' => $idServicio
+            ];
             $citaServicio = new CitaServicio($args);
             $citaServicio->guardar();
         }
+
+        // Retornar respuesta
         echo json_encode(['resultado' => $resultado]);
     }
 
