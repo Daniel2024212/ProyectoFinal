@@ -76,13 +76,13 @@ class APIController {
         echo json_encode($service->login($email, $password));
     }
 
-    // 4. MICROSERVICIO NOTIFICACIONES
+    // 2. NOTIFICACIÓN (REAL - MAIL)
     public static function notificar() {
         $email = $_GET['email'] ?? '';
-        $mensaje = $_GET['mensaje'] ?? 'Hola desde AppSalon';
+        $mensaje = $_GET['mensaje'] ?? 'Prueba de servicio real';
         
         $service = new NotificacionService();
-        echo json_encode($service->enviarAviso($email, $mensaje));
+        echo json_encode($service->enviarCorreo($email, 'Aviso Importante', $mensaje));
     }
 
     // 5. MICROSERVICIO REPORTES
