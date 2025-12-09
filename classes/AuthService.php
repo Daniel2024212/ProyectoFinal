@@ -8,7 +8,7 @@ if(file_exists(__DIR__ . '/../models/Usuario.php')) {
     require_once __DIR__ . '/../Models/Usuario.php';
 }
 
-use Models\Usuario;
+use models\Usuario;
 
 class AuthService {
     public function login($email, $password) {
