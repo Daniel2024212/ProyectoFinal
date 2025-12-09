@@ -6,6 +6,17 @@ namespace Controllers;
 use Models\Cita;
 use Models\CitaServicio;
 use Models\Servicio;
+require_once __DIR__ . '/../classes/AuthService.php';
+require_once __DIR__ . '/../classes/CitaService.php';
+use Classes\CitaService;
+require_once __DIR__ . '/../classes/CatalogoService.php';
+use Classes\CatalogoService;
+require_once __DIR__ . '/../classes/NotificacionService.php';
+require_once __DIR__ . '/../classes/ReporteService.php';
+
+// Importar la clase ReporteService
+use Classes\ReporteService;
+use Classes\NotificacionService;
 
 // --- CORRECCIÓN IMPORTANTE PARA PANTALLA BLANCA ---
 // Cargamos el archivo manualmente porque el autoloader podría no ver la carpeta 'classes'
@@ -56,17 +67,28 @@ class APIController {
         }
     }
 
-    // En Controllers/APIController.php
-
-    public static function login() {
-        // Importar manualmente para evitar errores
-        require_once __DIR__ . '/../classes/AuthService.php';
+    // 1. MICROSERVICIO LOGIN
+    public static function auth() {
+        $email = $_GET['email'] ?? $_POST['email'] ?? '';
+        $password = $_GET['password'] ?? $_POST['password'] ?? '';
         
-        $email = $_REQUEST['email'] ?? '';
-        $password = $_REQUEST['password'] ?? '';
+        $service = new AuthService();
+        echo json_encode($service->login($email, $password));
+    }
 
-        $auth = new \Classes\AuthService();
-        echo json_encode($auth->autenticar($email, $password));
+    // 4. MICROSERVICIO NOTIFICACIONES
+    public static function notificar() {
+        $email = $_GET['email'] ?? '';
+        $mensaje = $_GET['mensaje'] ?? 'Hola desde AppSalon';
+        
+        $service = new NotificacionService();
+        echo json_encode($service->enviarAviso($email, $mensaje));
+    }
+
+    // 5. MICROSERVICIO REPORTES
+    public static function reporte() {
+        $service = new ReporteService();
+        echo json_encode($service->generarResumenDiario());
     }
     
 }

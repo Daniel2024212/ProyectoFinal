@@ -40,16 +40,16 @@ $router->get('/admin', [AdminController::class, 'index']);
 $router->get('/api/servicios', [APIController::class, 'index']);
 // Consultar Citas Programadas (Filtro por Fecha)
 $router->get('/api/citas/programadas', [APIController::class, 'programadas']);
-// AHORA (Para probar en el navegador):
-$router->get('/api/auth/login', [APIController::class, 'login']);
-// --- NUEVA RUTA MICROSERVICIO AUTH (Con GET para probar) ---
-$router->get('/api/auth/login', [APIController::class, 'login']);
-// También agregamos POST para cuando uses la App real
-$router->post('/api/auth/login', [APIController::class, 'login']);
-$router->get('/api/notificar', [APIController::class, 'notificar']);
 
 // POST: Para usarlo desde tu App o Postman (más seguro)
 $router->post('/api/notificar', [APIController::class, 'notificar']);
+
+// ...
+
+// RUTAS DE LOS 5 MICROSERVICIOS (Disponibles en GET para probar en navegador)
+$router->get('/api/ms/auth',       [APIController::class, 'auth']);
+$router->get('/api/ms/notificar',  [APIController::class, 'notificar']);
+$router->get('/api/ms/reporte',    [APIController::class, 'reporte']);
 
 // CRUD de servicios:
 $router->get('/servicios', [ServicioController::class, 'index']);
