@@ -7,8 +7,6 @@ use Controllers\APIController;
 use Controllers\CitaController;
 use Controllers\LoginController;
 use Controllers\ServicioController;
-use Controllers\ValoracionesController;
-use Controllers\PagosController;
 use MVC\Router;
 
 $router = new Router();
@@ -36,19 +34,14 @@ $router->get('/mensaje', [LoginController::class, 'mensaje']);
 $router->get('/cita', [CitaController::class, 'index']);
 $router->get('/admin', [AdminController::class, 'index']);
 
-$router->post('/api/citas', [APIController::class, 'guardar']);
-
 // API de Citas:
 $router->get('/api/servicios', [APIController::class, 'index']);
+$router->post('/api/citas', [APIController::class, 'guardar']);
+$router->post('/api/eliminar', [APIController::class, 'eliminar']);
+
 // Consultar Citas Programadas (Filtro por Fecha)
 $router->get('/api/citas/programadas', [APIController::class, 'programadas']);
-
-// POST: Para usarlo desde tu App o Postman (más seguro)
 $router->post('/api/notificar', [APIController::class, 'notificar']);
-
-// ...
-
-// RUTAS DE LOS 5 MICROSERVICIOS (Disponibles en GET para probar en navegador)
 $router->get('/api/ms/auth',       [APIController::class, 'auth']);
 $router->get('/api/ms/notificar',  [APIController::class, 'notificar']);
 $router->get('/api/ms/reporte',    [APIController::class, 'reporte']);
