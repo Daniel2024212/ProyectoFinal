@@ -7,7 +7,7 @@ if(file_exists(__DIR__ . '/../models/Cita.php')) {
     require_once __DIR__ . '/../models/Cita.php';
 }
 
-use models\Cita;
+use Models\Cita;
 
 class ReporteService {
 
