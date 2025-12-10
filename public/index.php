@@ -39,7 +39,7 @@ $router->get('/api/servicios', [APIController::class, 'index']);
 $router->post('/api/citas', [APIController::class, 'guardar']);
 $router->post('/api/eliminar', [APIController::class, 'eliminar']);
 
-// Consultar Citas Programadas (Filtro por Fecha)
+// microservicios:
 $router->get('/api/citas/programadas', [APIController::class, 'programadas']);
 $router->post('/api/notificar', [APIController::class, 'notificar']);
 $router->get('/api/ms/auth',       [APIController::class, 'auth']);

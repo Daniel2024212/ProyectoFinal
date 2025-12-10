@@ -33,17 +33,79 @@ class APIController {
     }
 
     public static function guardar() {
-        $cita = new Cita($_POST);
-        $resultado = $cita->guardar();
-        $id = $resultado['id'];
+        
+        // 1. CARGA MANUAL DE MODELOS (Seguridad)
+        if(file_exists(__DIR__ . '/../models/Cita.php')) require_once __DIR__ . '/../models/Cita.php';
+        if(file_exists(__DIR__ . '/../models/CitaServicio.php')) require_once __DIR__ . '/../models/CitaServicio.php';
 
-        $idServicios = explode(",", $_POST['servicios']);
-        foreach($idServicios as $idServicio) {
-            $args = ['citaId' => $id, 'servicioId' => $idServicio];
-            $citaServicio = new CitaServicio($args);
-            $citaServicio->guardar();
+        try {
+            // --- INICIO: VALIDACIÓN DE HORARIO Y COLISIONES ---
+            
+            $fecha = $_POST['fecha'];
+            $horaNueva = $_POST['hora'];
+
+            // A. Obtener todas las citas de ese día
+            // Usamos una consulta directa para mayor rapidez
+            $query = "SELECT hora FROM citas WHERE fecha = '{$fecha}'";
+            $citasDelDia = Cita::SQL($query);
+
+            // B. Recorrer las citas existentes para verificar colisiones
+            foreach($citasDelDia as $cita) {
+                
+                // Convertir horas a minutos o timestamp para comparar
+                // Ejemplo: 10:30:00 -> timestamp
+                $horaExistente = strtotime($cita->hora);
+                $horaIntento = strtotime($horaNueva);
+
+                // Calcular la diferencia en segundos y convertir a minutos
+                // abs() nos da el valor absoluto (sin importar si es antes o después)
+                $diferenciaMinutos = abs($horaExistente - $horaIntento) / 60;
+
+                // C. REGLA DE NEGOCIO:
+                // Si la diferencia es menor a 15 minutos, es una colisión.
+                // Esto evita citas duplicadas (diferencia 0) y citas empalmadas (ej: 10:00 y 10:10)
+                if($diferenciaMinutos < 15) {
+                    echo json_encode([
+                        'resultado' => false, 
+                        'error' => 'Horario no disponible. Debe haber al menos 15 minutos de diferencia con otra cita.'
+                    ]);
+                    return; // Detenemos la ejecución aquí
+                }
+            }
+            // --- FIN VALIDACIÓN ---
+
+
+            // 2. Si pasó la validación, guardamos la Cita
+            $cita = new Cita($_POST);
+            $resultado = $cita->guardar();
+
+            if(!isset($resultado['resultado']) || !$resultado['resultado']) {
+                 throw new \Exception("Error al insertar en la BD.");
+            }
+
+            $id = $resultado['id'];
+
+            // 3. Guardar Servicios
+            $idServicios = explode(",", $_POST['servicios']);
+            
+            foreach($idServicios as $idServicio) {
+                $args = [
+                    'citaId' => $id,
+                    'servicioId' => $idServicio
+                ];
+                $citaServicio = new CitaServicio($args);
+                $citaServicio->guardar();
+            }
+
+            // ÉXITO
+            echo json_encode(['resultado' => $resultado]);
+
+        } catch (\Throwable $e) {
+            echo json_encode([
+                'resultado' => false, 
+                'error' => 'Error del Sistema: ' . $e->getMessage()
+            ]);
         }
-        echo json_encode(['resultado' => $resultado]);
     }
 
     public static function eliminar() {
