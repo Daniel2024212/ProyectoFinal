@@ -312,8 +312,8 @@ async function reservarCita() {
             // CASO ERROR DE HORARIO (AQUÍ ESTÁ EL CAMBIO)
             Swal.fire({
                 icon: 'warning', // Cambiamos a 'warning' (Amarillo) para que sea una advertencia
-                title: 'Cambia la Hora a 15 minutos de diferencia',
-                text: resultado.error, // Muestra: "Horario no disponible... debe haber 15 min..."
+                title: 'Error en la hora seleccionada',
+                text: 'cambia la hora a 15 min despues', // Muestra: "Horario no disponible... debe haber 15 min..."
                 confirmButtonText: 'Entendido, cambiaré la hora'
             });
         }
