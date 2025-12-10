@@ -2,7 +2,7 @@ let paso = 1;
 const pasoInicial = 1;
 const pasoFinal = 3;
 
-// Objeto principal de la cita
+// Objeto principal
 const cita = {
     id: '',
     nombre: '',
@@ -11,7 +11,7 @@ const cita = {
     servicios: []
 }
 
-// Variable global para almacenar las citas ocupadas del día
+// Variable global para citas ocupadas
 let citasDelDia = [];
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -19,36 +19,32 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function iniciarApp() {
-    mostrarSeccion(); 
-    tabs(); 
-    botonesPaginador(); 
-    paginaSiguiente(); 
+    mostrarSeccion();
+    tabs();
+    botonesPaginador();
+    paginaSiguiente();
     paginaAnterior();
 
-    consultarAPI(); // Carga los servicios del backend
+    consultarAPI(); // Carga servicios
 
-    idCliente(); 
-    nombreCliente(); 
+    idCliente();
+    nombreCliente();
     
-    seleccionarFecha(); // Valida fines de semana y descarga citas ocupadas
-    seleccionarHora();  // Valida horario comercial y COLISIÓN DE 15 MINUTOS
+    seleccionarFecha(); // Descarga citas ocupadas
+    seleccionarHora();  // Valida los 15 minutos
 
-    mostrarResumen(); 
+    mostrarResumen();
 }
 
 function mostrarSeccion() {
-    // 1. Ocultar sección anterior
     const seccionAnterior = document.querySelector('.mostrar');
     if(seccionAnterior) {
         seccionAnterior.classList.remove('mostrar');
     }
-
-    // 2. Mostrar sección actual
     const pasoSelector = `#paso-${paso}`;
     const seccion = document.querySelector(pasoSelector);
     seccion.classList.add('mostrar');
 
-    // 3. Resaltar tab actual
     const tabAnterior = document.querySelector('.actual');
     if(tabAnterior) {
         tabAnterior.classList.remove('actual');
@@ -163,72 +159,51 @@ function nombreCliente() {
     cita.nombre = document.querySelector('#nombre').value;
 }
 
-// ==========================================
-// LÓGICA DE FECHAS Y CITAS OCUPADAS
-// ==========================================
+// ===============================================
+// 1. SELECCIÓN DE FECHA Y CARGA DE CITAS OCUPADAS
+// ===============================================
 
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
     
     inputFecha.addEventListener('input', function(e) {
-        // Obtenemos el día de la semana (0 = Domingo, 6 = Sábado)
         const dia = new Date(e.target.value).getUTCDay();
 
-        // 1. Bloquear Fines de Semana
+        // Validar Fines de Semana
         if( [6, 0].includes(dia) ) {
             e.target.value = '';
             mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
         } else {
-            // Fecha válida: la guardamos y buscamos las citas de ese día
             cita.fecha = e.target.value;
+            // Descargar citas existentes para validación matemática
             buscarCitasPorFecha(cita.fecha);
         }
     });
 }
 
-// Variable global (asegúrate que esté al inicio del archivo)
- 
-
 async function buscarCitasPorFecha(fecha) {
     try {
-        // 1. Definir la URL. Intenta ambas rutas por si acaso.
-        // Si usaste el código anterior, debería ser /api/citas o /api/ms/citas
-        const url = `/api/citas?fecha=${fecha}`; 
+        // IMPORTANTE: Usamos la ruta del microservicio GET
+        const url = `/api/ms/citas?fecha=${fecha}`; 
         
-        console.log(`📡 Consultando API: ${url}`);
-
         const respuesta = await fetch(url);
-        
-        // 2. Verificar si el servidor respondió bien (Status 200)
-        if(!respuesta.ok) {
-            console.error('❌ Error en el servidor. Status:', respuesta.status);
-            throw new Error('Error al conectar con la API');
-        }
-
         const resultado = await respuesta.json();
-        console.log("📦 Datos recibidos del servidor:", resultado);
 
-        // 3. Guardar las citas (Manejo robusto de formatos)
-        // Si la API devuelve {agenda: [...]} usamos eso, si no, usamos resultado directo
-        if(resultado.agenda) {
-            citasDelDia = resultado.agenda;
-        } else if(Array.isArray(resultado)) {
-            citasDelDia = resultado;
-        } else {
-            citasDelDia = []; // Formato desconocido
-        }
+        // Guardamos las citas encontradas
+        // Soporte si la API devuelve {agenda: [...]} o [...]
+        citasDelDia = resultado.agenda || resultado;
         
-        console.log("✅ Citas guardadas en memoria:", citasDelDia);
+        console.log(`Citas encontradas para ${fecha}:`, citasDelDia);
 
     } catch (error) {
-        console.error('❌ Error grave en JS:', error);
-        citasDelDia = []; // Limpiamos para evitar errores
+        console.log('Error API Citas:', error);
+        citasDelDia = []; 
     }
 }
 
-// ==========================================
-// LÓGICA DE HORA Y COLISIONES (15 MINS)
-// ==========================================
+// ===============================================
+// 2. VALIDACIÓN MATEMÁTICA DE 15 MINUTOS
+// ===============================================
 
 function seleccionarHora() {
     const inputHora = document.querySelector('#hora');
@@ -237,52 +212,45 @@ function seleccionarHora() {
         const horaUsuario = e.target.value;
         const hora = horaUsuario.split(":")[0];
 
-        // 1. Validar Horario Comercial
+        // A. Validar Horario Comercial
         if(hora < 9 || hora > 20) {
             e.target.value = '';
             mostrarAlerta('Hora no válida. Abrimos de 9:00 a 20:00', 'error', '.formulario');
             return;
         }
 
-        // 2. Validar Colisión (15 min)
-        console.log('--- NUEVA VALIDACIÓN ---');
-        console.log('Hora Usuario:', horaUsuario);
-        console.log('Citas contra las que comparar:', citasDelDia);
-
-        // Si no hay citas, no hacemos nada
+        // B. Validar Colisión con citas existentes
+        // Si no hay citas ese día, permitimos todo
         if(citasDelDia.length === 0) {
-            console.log('El día está libre (o la API falló).');
             cita.hora = e.target.value;
             return;
         }
 
+        // Recorremos el array buscando choques
         const choca = citasDelDia.some(citaBD => {
-            // Convertir todo a minutos para comparar con precisión
             
-            // Hora BD (puede venir como "10:00:00")
+            // Convertir Hora BD (ej: "10:30:00") a Minutos Totales
             const horaBDArr = citaBD.hora.split(":"); 
             const minutosBD = (parseInt(horaBDArr[0]) * 60) + parseInt(horaBDArr[1]);
 
-            // Hora Usuario (viene como "10:15")
+            // Convertir Hora Usuario (ej: "10:40") a Minutos Totales
             const horaUserArr = horaUsuario.split(":");
             const minutosUser = (parseInt(horaUserArr[0]) * 60) + parseInt(horaUserArr[1]);
 
-            // Diferencia
+            // Diferencia Absoluta
             const diferencia = Math.abs(minutosBD - minutosUser);
             
-            console.log(`Comparando: BD(${minutosBD}) vs User(${minutosUser}) = Dif: ${diferencia} min`);
+            console.log(`Comparando: BD(${citaBD.hora}) vs User(${horaUsuario}) | Dif: ${diferencia} min`);
 
-            // Si es menor a 15, devuelve true (hay choque)
-            return diferencia < 15; 
+            // REGLA DE ORO: Menos de 15 minutos = Bloqueado
+            return diferencia < 15;
         });
 
         if(choca) {
-            console.warn('⛔ BLOQUEADO: Menos de 15 minutos de diferencia.');
-            e.target.value = ''; // Borrar input
-            mostrarAlerta('Horario ocupado. Debe haber 15 mins de diferencia.', 'error', '.formulario');
+            e.target.value = ''; // Borramos la hora seleccionada
+            mostrarAlerta('Horario ocupado. Deja al menos 15 mins entre citas.', 'error', '.formulario');
         } else {
-            console.log('✅ HORARIO ACEPTADO');
-            cita.hora = e.target.value;
+            cita.hora = e.target.value; // Hora válida
         }
     });
 }
@@ -349,10 +317,9 @@ function mostrarResumen() {
     const nombreCliente = document.createElement('P');
     nombreCliente.innerHTML = `<span>Cliente:</span> ${nombre}`;
 
-    // Formatear Fecha
     const fechaObj = new Date(fecha);
     const mes = fechaObj.getMonth();
-    const dia = fechaObj.getDate() + 2; 
+    const dia = fechaObj.getDate() + 2;
     const year = fechaObj.getFullYear();
     const fechaUTC = new Date(Date.UTC(year, mes, dia));
     const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
@@ -386,7 +353,7 @@ async function reservarCita() {
     datos.append('servicios', idServicios);
 
     try {
-        const url = '/api/citas'; 
+        const url = '/api/citas'; // POST para guardar
         const respuesta = await fetch(url, {
             method: 'POST',
             body: datos
