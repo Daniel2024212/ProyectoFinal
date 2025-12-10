@@ -34,49 +34,50 @@ class APIController {
 
     public static function guardar() {
         
-        // 1. CARGA MANUAL DE MODELOS (Seguridad)
+        // 1. CARGA MANUAL DE MODELOS
         if(file_exists(__DIR__ . '/../models/Cita.php')) require_once __DIR__ . '/../models/Cita.php';
         if(file_exists(__DIR__ . '/../models/CitaServicio.php')) require_once __DIR__ . '/../models/CitaServicio.php';
 
         try {
-            // --- INICIO: VALIDACIÓN DE HORARIO Y COLISIONES ---
-            
+            // --- VALIDACIÓN INTELIGENTE DE HORARIO ---
             $fecha = $_POST['fecha'];
             $horaNueva = $_POST['hora'];
+            
+            // Convertimos la hora ingresada a timestamp (segundos)
+            $timestampNuevo = strtotime($horaNueva);
 
-            // A. Obtener todas las citas de ese día
-            // Usamos una consulta directa para mayor rapidez
+            // Consultar citas del día
             $query = "SELECT hora FROM citas WHERE fecha = '{$fecha}'";
-            $citasDelDia = Cita::SQL($query);
+            $citasDelDia = \Models\Cita::SQL($query);
 
-            // B. Recorrer las citas existentes para verificar colisiones
             foreach($citasDelDia as $cita) {
-                
-                // Convertir horas a minutos o timestamp para comparar
-                // Ejemplo: 10:30:00 -> timestamp
-                $horaExistente = strtotime($cita->hora);
-                $horaIntento = strtotime($horaNueva);
+                $horaOcupada = $cita->hora; // Ejemplo: "10:00:00"
+                $timestampOcupado = strtotime($horaOcupada);
 
-                // Calcular la diferencia en segundos y convertir a minutos
-                // abs() nos da el valor absoluto (sin importar si es antes o después)
-                $diferenciaMinutos = abs($horaExistente - $horaIntento) / 60;
+                // Diferencia en minutos (absoluta)
+                $diferencia = abs($timestampOcupado - $timestampNuevo) / 60;
 
-                // C. REGLA DE NEGOCIO:
-                // Si la diferencia es menor a 15 minutos, es una colisión.
-                // Esto evita citas duplicadas (diferencia 0) y citas empalmadas (ej: 10:00 y 10:10)
-                if($diferenciaMinutos < 15) {
+                // Si hay menos de 15 minutos de diferencia (COLISIÓN)
+                if($diferencia < 15) {
+                    
+                    // Calculamos la hora sugerida (Hora Ocupada + 15 minutos)
+                    // Nota: strtotime suma segundos, así que 15 min * 60 seg
+                    $sugerencia = date('H:i', $timestampOcupado + (15 * 60));
+                    
+                    // Formato limpio para el mensaje (quitamos los segundos extra 00:00:00 -> 00:00)
+                    $horaOcupadaLegible = date('H:i', $timestampOcupado);
+
                     echo json_encode([
                         'resultado' => false, 
-                        'error' => 'Horario no disponible. Debe haber al menos 15 minutos de diferencia con otra cita.'
+                        'error' => "Horario no disponible. Choca con la cita de las {$horaOcupadaLegible}. Por favor, intenta a las {$sugerencia} o después."
                     ]);
-                    return; // Detenemos la ejecución aquí
+                    return; // Detener proceso
                 }
             }
             // --- FIN VALIDACIÓN ---
 
-
-            // 2. Si pasó la validación, guardamos la Cita
-            $cita = new Cita($_POST);
+            // 2. Si pasa la validación, guardamos
+            $cita = new \Models\Cita($_POST);
             $resultado = $cita->guardar();
 
             if(!isset($resultado['resultado']) || !$resultado['resultado']) {
@@ -87,17 +88,15 @@ class APIController {
 
             // 3. Guardar Servicios
             $idServicios = explode(",", $_POST['servicios']);
-            
             foreach($idServicios as $idServicio) {
                 $args = [
                     'citaId' => $id,
                     'servicioId' => $idServicio
                 ];
-                $citaServicio = new CitaServicio($args);
+                $citaServicio = new \Models\CitaServicio($args);
                 $citaServicio->guardar();
             }
 
-            // ÉXITO
             echo json_encode(['resultado' => $resultado]);
 
         } catch (\Throwable $e) {
