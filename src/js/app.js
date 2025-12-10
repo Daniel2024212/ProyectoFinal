@@ -237,36 +237,51 @@ function seleccionarHora() {
         const horaUsuario = e.target.value;
         const hora = horaUsuario.split(":")[0];
 
-        // 1. VALIDACIÓN: Horario Comercial (9:00 a 20:00)
+        // 1. Validar Horario Comercial
         if(hora < 9 || hora > 20) {
             e.target.value = '';
             mostrarAlerta('Hora no válida. Abrimos de 9:00 a 20:00', 'error', '.formulario');
             return;
         }
 
-        // 2. VALIDACIÓN: Colisión de 15 minutos (Matemática Pura)
+        // 2. Validar Colisión (15 min)
+        console.log('--- NUEVA VALIDACIÓN ---');
+        console.log('Hora Usuario:', horaUsuario);
+        console.log('Citas contra las que comparar:', citasDelDia);
+
+        // Si no hay citas, no hacemos nada
+        if(citasDelDia.length === 0) {
+            console.log('El día está libre (o la API falló).');
+            cita.hora = e.target.value;
+            return;
+        }
+
         const choca = citasDelDia.some(citaBD => {
+            // Convertir todo a minutos para comparar con precisión
             
-            // Convertimos Hora BD a Minutos Totales (ej: 10:30 -> 630 min)
+            // Hora BD (puede venir como "10:00:00")
             const horaBDArr = citaBD.hora.split(":"); 
             const minutosBD = (parseInt(horaBDArr[0]) * 60) + parseInt(horaBDArr[1]);
 
-            // Convertimos Hora Usuario a Minutos Totales
+            // Hora Usuario (viene como "10:15")
             const horaUserArr = horaUsuario.split(":");
             const minutosUser = (parseInt(horaUserArr[0]) * 60) + parseInt(horaUserArr[1]);
 
-            // Diferencia Absoluta
+            // Diferencia
             const diferencia = Math.abs(minutosBD - minutosUser);
+            
+            console.log(`Comparando: BD(${minutosBD}) vs User(${minutosUser}) = Dif: ${diferencia} min`);
 
-            // Si la diferencia es menor a 15 min, es colisión
-            return diferencia < 15;
+            // Si es menor a 15, devuelve true (hay choque)
+            return diferencia < 15; 
         });
 
         if(choca) {
-            e.target.value = ''; // Reseteamos el input
+            console.warn('⛔ BLOQUEADO: Menos de 15 minutos de diferencia.');
+            e.target.value = ''; // Borrar input
             mostrarAlerta('Horario ocupado. Debe haber 15 mins de diferencia.', 'error', '.formulario');
         } else {
-            // Todo correcto
+            console.log('✅ HORARIO ACEPTADO');
             cita.hora = e.target.value;
         }
     });
