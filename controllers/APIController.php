@@ -33,78 +33,17 @@ class APIController {
     }
 
     public static function guardar() {
-        
-        // 1. CARGA MANUAL DE MODELOS
-        if(file_exists(__DIR__ . '/../models/Cita.php')) require_once __DIR__ . '/../models/Cita.php';
-        if(file_exists(__DIR__ . '/../models/CitaServicio.php')) require_once __DIR__ . '/../models/CitaServicio.php';
+        $cita = new Cita($_POST);
+        $resultado = $cita->guardar();
+        $id = $resultado['id'];
 
-        try {
-            // --- VALIDACIÓN INTELIGENTE DE HORARIO ---
-            $fecha = $_POST['fecha'];
-            $horaNueva = $_POST['hora'];
-            
-            // Convertimos la hora ingresada a timestamp (segundos)
-            $timestampNuevo = strtotime($horaNueva);
-
-            // Consultar citas del día
-            $query = "SELECT hora FROM citas WHERE fecha = '{$fecha}'";
-            $citasDelDia = \Models\Cita::SQL($query);
-
-            foreach($citasDelDia as $cita) {
-                $horaOcupada = $cita->hora; // Ejemplo: "10:00:00"
-                $timestampOcupado = strtotime($horaOcupada);
-
-                // Diferencia en minutos (absoluta)
-                $diferencia = abs($timestampOcupado - $timestampNuevo) / 60;
-
-                // Si hay menos de 15 minutos de diferencia (COLISIÓN)
-                if($diferencia < 15) {
-                    
-                    // Calculamos la hora sugerida (Hora Ocupada + 15 minutos)
-                    // Nota: strtotime suma segundos, así que 15 min * 60 seg
-                    $sugerencia = date('H:i', $timestampOcupado + (15 * 60));
-                    
-                    // Formato limpio para el mensaje (quitamos los segundos extra 00:00:00 -> 00:00)
-                    $horaOcupadaLegible = date('H:i', $timestampOcupado);
-
-                    echo json_encode([
-                        'resultado' => false, 
-                        'error' => "Horario no disponible. Choca con la cita de las {$horaOcupadaLegible}. Por favor, intenta a las {$sugerencia} o después."
-                    ]);
-                    return; // Detener proceso
-                }
-            }
-            // --- FIN VALIDACIÓN ---
-
-            // 2. Si pasa la validación, guardamos
-            $cita = new \Models\Cita($_POST);
-            $resultado = $cita->guardar();
-
-            if(!isset($resultado['resultado']) || !$resultado['resultado']) {
-                 throw new \Exception("Error al insertar en la BD.");
-            }
-
-            $id = $resultado['id'];
-
-            // 3. Guardar Servicios
-            $idServicios = explode(",", $_POST['servicios']);
-            foreach($idServicios as $idServicio) {
-                $args = [
-                    'citaId' => $id,
-                    'servicioId' => $idServicio
-                ];
-                $citaServicio = new \Models\CitaServicio($args);
-                $citaServicio->guardar();
-            }
-
-            echo json_encode(['resultado' => $resultado]);
-
-        } catch (\Throwable $e) {
-            echo json_encode([
-                'resultado' => false, 
-                'error' => 'Error del Sistema: ' . $e->getMessage()
-            ]);
+        $idServicios = explode(",", $_POST['servicios']);
+        foreach($idServicios as $idServicio) {
+            $args = ['citaId' => $id, 'servicioId' => $idServicio];
+            $citaServicio = new CitaServicio($args);
+            $citaServicio->guardar();
         }
+        echo json_encode(['resultado' => $resultado]);
     }
 
     public static function eliminar() {
