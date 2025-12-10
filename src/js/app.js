@@ -216,32 +216,41 @@ function seleccionarHora() {
         const horaUsuario = e.target.value;
         const hora = horaUsuario.split(":")[0];
 
-        // VALIDACIÓN 2: Horario Comercial (9am a 8pm)
+        // 1. VALIDACIÓN: Horario Comercial (9am a 8pm)
         if(hora < 9 || hora > 20) {
             e.target.value = '';
             mostrarAlerta('Hora no válida. Abrimos de 9:00 a 20:00', 'error', '.formulario');
             return;
         }
 
-        // VALIDACIÓN 3: Colisión de 15 minutos
+        // 2. VALIDACIÓN: Colisión de 15 minutos
+        // Verificamos si la API trajo citas (Debugging)
+        console.log('Citas encontradas hoy:', citasDelDia);
+
         const choca = citasDelDia.some(citaBD => {
-            const horaCita = citaBD.hora.split(":"); 
-            const minCita = (parseInt(horaCita[0]) * 60) + parseInt(horaCita[1]);
+            
+            // A. Convertir Hora de la BD a Minutos (ej: "10:30:00")
+            const horaBDArr = citaBD.hora.split(":"); 
+            const minutosBD = (parseInt(horaBDArr[0]) * 60) + parseInt(horaBDArr[1]);
 
-            const horaInput = horaUsuario.split(":");
-            const minInput = (parseInt(horaInput[0]) * 60) + parseInt(horaInput[1]);
+            // B. Convertir Hora del Usuario a Minutos (ej: "10:40")
+            const horaUserArr = horaUsuario.split(":");
+            const minutosUser = (parseInt(horaUserArr[0]) * 60) + parseInt(horaUserArr[1]);
 
-            const diferencia = Math.abs(minCita - minInput);
+            // C. Calcular diferencia absoluta
+            const diferencia = Math.abs(minutosBD - minutosUser);
 
-            // Si hay menos de 15 minutos de diferencia
+            console.log(`Comparando BD: ${citaBD.hora} (${minutosBD}m) vs Usuario: ${horaUsuario} (${minutosUser}m) | Dif: ${diferencia}`);
+
+            // D. Si la diferencia es MENOR a 15 minutos, hay colisión
             return diferencia < 15;
         });
 
         if(choca) {
-            e.target.value = '';
-            mostrarAlerta('Horario ocupado. Debe haber 15 mins entre citas.', 'error', '.formulario');
+            e.target.value = ''; // Borramos el campo
+            mostrarAlerta('Horario ocupado. Debe haber 15 mins de diferencia entre citas.', 'error', '.formulario');
         } else {
-            // Si todo está bien, guardamos la hora
+            // Si pasa la validación, guardamos la hora en el objeto cita
             cita.hora = e.target.value;
         }
     });
