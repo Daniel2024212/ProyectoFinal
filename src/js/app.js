@@ -186,23 +186,43 @@ function seleccionarFecha() {
     });
 }
 
+// Variable global (asegúrate que esté al inicio del archivo)
+ 
+
 async function buscarCitasPorFecha(fecha) {
     try {
-        // Consultamos la API para saber qué horas están ocupadas
-        // NOTA: Verifica que esta ruta coincida con tu Router
+        // 1. Definir la URL. Intenta ambas rutas por si acaso.
+        // Si usaste el código anterior, debería ser /api/citas o /api/ms/citas
         const url = `/api/citas?fecha=${fecha}`; 
         
-        const respuesta = await fetch(url);
-        const resultado = await respuesta.json();
+        console.log(`📡 Consultando API: ${url}`);
 
-        // Ajuste: si tu API devuelve un objeto con 'agenda' o un array directo
-        citasDelDia = resultado.agenda || resultado; 
+        const respuesta = await fetch(url);
         
-        console.log("Citas ocupadas hoy:", citasDelDia);
+        // 2. Verificar si el servidor respondió bien (Status 200)
+        if(!respuesta.ok) {
+            console.error('❌ Error en el servidor. Status:', respuesta.status);
+            throw new Error('Error al conectar con la API');
+        }
+
+        const resultado = await respuesta.json();
+        console.log("📦 Datos recibidos del servidor:", resultado);
+
+        // 3. Guardar las citas (Manejo robusto de formatos)
+        // Si la API devuelve {agenda: [...]} usamos eso, si no, usamos resultado directo
+        if(resultado.agenda) {
+            citasDelDia = resultado.agenda;
+        } else if(Array.isArray(resultado)) {
+            citasDelDia = resultado;
+        } else {
+            citasDelDia = []; // Formato desconocido
+        }
+        
+        console.log("✅ Citas guardadas en memoria:", citasDelDia);
 
     } catch (error) {
-        console.log('Error al buscar citas:', error);
-        citasDelDia = []; // Limpiamos en caso de error para no bloquear falsamente
+        console.error('❌ Error grave en JS:', error);
+        citasDelDia = []; // Limpiamos para evitar errores
     }
 }
 
