@@ -11,7 +11,7 @@ const cita = {
     servicios: []
 }
 
-// Variable para guardar las citas ocupadas del día seleccionado
+// Variable global para almacenar las citas ocupadas del día
 let citasDelDia = [];
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -19,35 +19,36 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function iniciarApp() {
-    mostrarSeccion(); // Muestra la sección actual (1, 2 o 3)
-    tabs(); // Cambia de sección al dar click en los tabs
-    botonesPaginador(); // Agrega funcionalidad a botones Anterior/Siguiente
+    mostrarSeccion(); 
+    tabs(); 
+    botonesPaginador(); 
     paginaSiguiente(); 
     paginaAnterior();
 
-    consultarAPI(); // Consulta la API de servicios (Backend)
+    consultarAPI(); // Carga los servicios del backend
 
-    idCliente(); // Busca el ID del cliente en el HTML
-    nombreCliente(); // Busca el nombre del cliente en el HTML
-    seleccionarFecha(); // Validación de fecha y fines de semana
-    seleccionarHora(); // Validación de hora y colisiones (15 mins)
+    idCliente(); 
+    nombreCliente(); 
+    
+    seleccionarFecha(); // Valida fines de semana y descarga citas ocupadas
+    seleccionarHora();  // Valida horario comercial y COLISIÓN DE 15 MINUTOS
 
-    mostrarResumen(); // Muestra el resumen en el paso 3
+    mostrarResumen(); 
 }
 
 function mostrarSeccion() {
-    // 1. Ocultar la sección que tenga la clase de mostrar
+    // 1. Ocultar sección anterior
     const seccionAnterior = document.querySelector('.mostrar');
     if(seccionAnterior) {
         seccionAnterior.classList.remove('mostrar');
     }
 
-    // 2. Seleccionar la sección con el paso actual y mostrarla
+    // 2. Mostrar sección actual
     const pasoSelector = `#paso-${paso}`;
     const seccion = document.querySelector(pasoSelector);
     seccion.classList.add('mostrar');
 
-    // 3. Resaltar el Tab actual
+    // 3. Resaltar tab actual
     const tabAnterior = document.querySelector('.actual');
     if(tabAnterior) {
         tabAnterior.classList.remove('actual');
@@ -77,7 +78,7 @@ function botonesPaginador() {
     } else if (paso === 3) {
         paginaAnterior.classList.remove('ocultar');
         paginaSiguiente.classList.add('ocultar');
-        mostrarResumen(); // Cargar el resumen al llegar al final
+        mostrarResumen();
     } else {
         paginaAnterior.classList.remove('ocultar');
         paginaSiguiente.classList.remove('ocultar');
@@ -105,7 +106,6 @@ function paginaSiguiente() {
 
 async function consultarAPI() {
     try {
-        // Asegúrate que esta URL sea correcta en tu proyecto
         const url = '/api/servicios'; 
         const resultado = await fetch(url);
         const servicios = await resultado.json();
@@ -144,17 +144,12 @@ function mostrarServicios(servicios) {
 function seleccionarServicio(servicio) {
     const { id } = servicio;
     const { servicios } = cita;
-
-    // Identificar el elemento al que se le da click
     const divServicio = document.querySelector(`[data-id-servicio="${id}"]`);
 
-    // Comprobar si un servicio ya fue agregado
     if( servicios.some( agregado => agregado.id === id ) ) {
-        // Eliminarlo
         cita.servicios = servicios.filter( agregado => agregado.id !== id );
         divServicio.classList.remove('seleccionado');
     } else {
-        // Agregarlo
         cita.servicios = [...servicios, servicio];
         divServicio.classList.add('seleccionado');
     }
@@ -168,47 +163,53 @@ function nombreCliente() {
     cita.nombre = document.querySelector('#nombre').value;
 }
 
-// --- VALIDACIÓN DE FECHA ---
+// ==========================================
+// LÓGICA DE FECHAS Y CITAS OCUPADAS
+// ==========================================
+
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
     
     inputFecha.addEventListener('input', function(e) {
+        // Obtenemos el día de la semana (0 = Domingo, 6 = Sábado)
         const dia = new Date(e.target.value).getUTCDay();
 
-        // VALIDACIÓN 1: Fines de Semana (0=Domingo, 6=Sábado)
+        // 1. Bloquear Fines de Semana
         if( [6, 0].includes(dia) ) {
             e.target.value = '';
             mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
         } else {
-            // Si la fecha es válida, la guardamos
+            // Fecha válida: la guardamos y buscamos las citas de ese día
             cita.fecha = e.target.value;
-            
-            // Y consultamos las citas ocupadas para ese día (Para validar horas después)
             buscarCitasPorFecha(cita.fecha);
         }
     });
 }
 
-// --- CONSULTA DE CITAS OCUPADAS (Microservicio) ---
 async function buscarCitasPorFecha(fecha) {
     try {
-        // Asegúrate de que esta ruta exista en tu index.php
-        // Puede ser /api/citas, /api/citas/programadas o /api/ms/citas
-        const url = `/api/ms/citas?fecha=${fecha}`; 
+        // Consultamos la API para saber qué horas están ocupadas
+        // NOTA: Verifica que esta ruta coincida con tu Router
+        const url = `/api/citas?fecha=${fecha}`; 
         
         const respuesta = await fetch(url);
         const resultado = await respuesta.json();
 
-        // Guardamos las citas encontradas en la variable global
-        // Ajusta esto si tu API devuelve {agenda: [...]} o solo [...]
+        // Ajuste: si tu API devuelve un objeto con 'agenda' o un array directo
         citasDelDia = resultado.agenda || resultado; 
+        
+        console.log("Citas ocupadas hoy:", citasDelDia);
 
     } catch (error) {
         console.log('Error al buscar citas:', error);
+        citasDelDia = []; // Limpiamos en caso de error para no bloquear falsamente
     }
 }
 
-// --- VALIDACIÓN DE HORA ---
+// ==========================================
+// LÓGICA DE HORA Y COLISIONES (15 MINS)
+// ==========================================
+
 function seleccionarHora() {
     const inputHora = document.querySelector('#hora');
     
@@ -216,41 +217,36 @@ function seleccionarHora() {
         const horaUsuario = e.target.value;
         const hora = horaUsuario.split(":")[0];
 
-        // 1. VALIDACIÓN: Horario Comercial (9am a 8pm)
+        // 1. VALIDACIÓN: Horario Comercial (9:00 a 20:00)
         if(hora < 9 || hora > 20) {
             e.target.value = '';
             mostrarAlerta('Hora no válida. Abrimos de 9:00 a 20:00', 'error', '.formulario');
             return;
         }
 
-        // 2. VALIDACIÓN: Colisión de 15 minutos
-        // Verificamos si la API trajo citas (Debugging)
-        console.log('Citas encontradas hoy:', citasDelDia);
-
+        // 2. VALIDACIÓN: Colisión de 15 minutos (Matemática Pura)
         const choca = citasDelDia.some(citaBD => {
             
-            // A. Convertir Hora de la BD a Minutos (ej: "10:30:00")
+            // Convertimos Hora BD a Minutos Totales (ej: 10:30 -> 630 min)
             const horaBDArr = citaBD.hora.split(":"); 
             const minutosBD = (parseInt(horaBDArr[0]) * 60) + parseInt(horaBDArr[1]);
 
-            // B. Convertir Hora del Usuario a Minutos (ej: "10:40")
+            // Convertimos Hora Usuario a Minutos Totales
             const horaUserArr = horaUsuario.split(":");
             const minutosUser = (parseInt(horaUserArr[0]) * 60) + parseInt(horaUserArr[1]);
 
-            // C. Calcular diferencia absoluta
+            // Diferencia Absoluta
             const diferencia = Math.abs(minutosBD - minutosUser);
 
-            console.log(`Comparando BD: ${citaBD.hora} (${minutosBD}m) vs Usuario: ${horaUsuario} (${minutosUser}m) | Dif: ${diferencia}`);
-
-            // D. Si la diferencia es MENOR a 15 minutos, hay colisión
+            // Si la diferencia es menor a 15 min, es colisión
             return diferencia < 15;
         });
 
         if(choca) {
-            e.target.value = ''; // Borramos el campo
-            mostrarAlerta('Horario ocupado. Debe haber 15 mins de diferencia entre citas.', 'error', '.formulario');
+            e.target.value = ''; // Reseteamos el input
+            mostrarAlerta('Horario ocupado. Debe haber 15 mins de diferencia.', 'error', '.formulario');
         } else {
-            // Si pasa la validación, guardamos la hora en el objeto cita
+            // Todo correcto
             cita.hora = e.target.value;
         }
     });
@@ -280,7 +276,6 @@ function mostrarAlerta(mensaje, tipo, elemento, desaparece = true) {
 function mostrarResumen() {
     const resumen = document.querySelector('.contenido-resumen');
 
-    // Limpiar el contenido anterior
     while(resumen.firstChild) {
         resumen.removeChild(resumen.firstChild);
     }
@@ -290,15 +285,12 @@ function mostrarResumen() {
         return;
     }
 
-    // Formatear el div de resumen
     const { nombre, fecha, hora, servicios } = cita;
 
-    // Header Servicios
     const headingServicios = document.createElement('H3');
     headingServicios.textContent = 'Resumen de Servicios';
     resumen.appendChild(headingServicios);
 
-    // Iterar y mostrar los servicios
     servicios.forEach(servicio => {
         const { id, precio, nombre } = servicio;
         const contenedorServicio = document.createElement('DIV');
@@ -315,7 +307,6 @@ function mostrarResumen() {
         resumen.appendChild(contenedorServicio);
     });
 
-    // Header Cita
     const headingCita = document.createElement('H3');
     headingCita.textContent = 'Resumen de Cita';
     resumen.appendChild(headingCita);
@@ -323,10 +314,10 @@ function mostrarResumen() {
     const nombreCliente = document.createElement('P');
     nombreCliente.innerHTML = `<span>Cliente:</span> ${nombre}`;
 
-    // Formatear la fecha en español
+    // Formatear Fecha
     const fechaObj = new Date(fecha);
     const mes = fechaObj.getMonth();
-    const dia = fechaObj.getDate() + 2; // Ajuste por desfase de zona horaria JS
+    const dia = fechaObj.getDate() + 2; 
     const year = fechaObj.getFullYear();
     const fechaUTC = new Date(Date.UTC(year, mes, dia));
     const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
@@ -338,7 +329,6 @@ function mostrarResumen() {
     const horaCita = document.createElement('P');
     horaCita.innerHTML = `<span>Hora:</span> ${hora} Horas`;
 
-    // Botón para Crear Cita
     const botonReservar = document.createElement('BUTTON');
     botonReservar.classList.add('boton');
     botonReservar.textContent = 'Reservar Cita';
@@ -350,9 +340,7 @@ function mostrarResumen() {
     resumen.appendChild(botonReservar);
 }
 
-// --- GUARDAR CITA EN EL SERVIDOR ---
 async function reservarCita() {
-    
     const { nombre, fecha, hora, servicios, id } = cita;
     const idServicios = servicios.map( servicio => servicio.id );
 
@@ -363,9 +351,7 @@ async function reservarCita() {
     datos.append('servicios', idServicios);
 
     try {
-        // Asegúrate de tener esta ruta POST en tu Router
         const url = '/api/citas'; 
-        
         const respuesta = await fetch(url, {
             method: 'POST',
             body: datos
@@ -382,14 +368,13 @@ async function reservarCita() {
             }).then( () => {
                 setTimeout(() => {
                     window.location.reload();
-                }, 3000);
+                }, 1500);
             })
         } else {
-            // Aquí mostramos el error específico que manda el Backend
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: resultado.error || 'Hubo un error al guardar la cita'
+                text: resultado.error || 'Hubo un error al guardar'
             });
         }
     } catch (error) {
