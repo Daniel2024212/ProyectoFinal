@@ -2,28 +2,22 @@
 
 namespace Controllers;
 
-// Modelos necesarios
 use Models\Cita;
 use Models\CitaServicio;
 use Models\Servicio;
+
+// Importar Microservicios (Classes)
 require_once __DIR__ . '/../classes/AuthService.php';
-require_once __DIR__ . '/../classes/CitaService.php';
-use Classes\CitaService;
-require_once __DIR__ . '/../classes/CatalogoService.php';
-use Classes\CatalogoService;
 require_once __DIR__ . '/../classes/NotificacionService.php';
+require_once __DIR__ . '/../classes/CitaService.php';
+require_once __DIR__ . '/../classes/CatalogoService.php';
 require_once __DIR__ . '/../classes/ReporteService.php';
 
-// Importar la clase ReporteService
-use Classes\ReporteService;
+use Classes\AuthService;
 use Classes\NotificacionService;
-
-// --- CORRECCIÓN IMPORTANTE PARA PANTALLA BLANCA ---
-// Cargamos el archivo manualmente porque el autoloader podría no ver la carpeta 'classes'
-require_once __DIR__ . '/../classes/AuthService.php';
-
-// Ahora sí lo usamos
-use Classes\AuthService; 
+use Classes\CitaService;
+use Classes\CatalogoService;
+use Classes\ReporteService;
 
 class APIController {
 
@@ -32,18 +26,65 @@ class APIController {
         echo json_encode($servicios);
     }
 
+    // --- FUNCIÓN PRINCIPAL DE GUARDADO CON VALIDACIÓN ---
     public static function guardar() {
-        $cita = new Cita($_POST);
-        $resultado = $cita->guardar();
-        $id = $resultado['id'];
+        
+        // 1. Carga manual de modelos (Seguridad Linux)
+        if(file_exists(__DIR__ . '/../models/Cita.php')) require_once __DIR__ . '/../models/Cita.php';
+        if(file_exists(__DIR__ . '/../models/CitaServicio.php')) require_once __DIR__ . '/../models/CitaServicio.php';
 
-        $idServicios = explode(",", $_POST['servicios']);
-        foreach($idServicios as $idServicio) {
-            $args = ['citaId' => $id, 'servicioId' => $idServicio];
-            $citaServicio = new CitaServicio($args);
-            $citaServicio->guardar();
+        try {
+            // --- INICIO: VALIDACIÓN DE 15 MINUTOS ---
+            $fecha = $_POST['fecha'];
+            $horaNueva = $_POST['hora'];
+            
+            // 1. Consultar todas las citas de ese día
+            $query = "SELECT hora FROM citas WHERE fecha = '{$fecha}'";
+            $citas = \Models\Cita::SQL($query);
+
+            foreach($citas as $cita) {
+                // Convertir horas a minutos para comparar
+                // Ej: "10:30:00" -> Timestamp
+                $horaExistente = strtotime($cita->hora);
+                $horaIntento = strtotime($horaNueva);
+
+                // Diferencia en minutos (valor absoluto)
+                $diferencia = abs($horaExistente - $horaIntento) / 60;
+
+                // Si la diferencia es menor a 15 minutos, bloqueamos
+                if($diferencia < 15) {
+                    echo json_encode([
+                        'resultado' => false, 
+                        'error' => "Horario no disponible. Ya existe una cita a las " . date('H:i', $horaExistente) . ". Debe haber 15 mins de diferencia."
+                    ]);
+                    return; // ¡IMPORTANTE! Detenemos el guardado aquí
+                }
+            }
+            // --- FIN VALIDACIÓN ---
+
+
+            // 2. Guardar Cita si pasó la validación
+            $cita = new \Models\Cita($_POST);
+            $resultado = $cita->guardar();
+            $id = $resultado['id'];
+
+            // 3. Guardar Servicios
+            $idServicios = explode(",", $_POST['servicios']);
+            foreach($idServicios as $idServicio) {
+                $args = [
+                    'citaId' => $id,
+                    'servicioId' => $idServicio
+                ];
+                $citaServicio = new \Models\CitaServicio($args);
+                $citaServicio->guardar();
+            }
+
+            // Responder Éxito
+            echo json_encode(['resultado' => $resultado]);
+
+        } catch (\Throwable $e) {
+            echo json_encode(['resultado' => false, 'error' => 'Error del Servidor: ' . $e->getMessage()]);
         }
-        echo json_encode(['resultado' => $resultado]);
     }
 
     public static function eliminar() {
@@ -55,40 +96,23 @@ class APIController {
         }
     }
 
-    public static function programadas() {
-        // Muestra citas futuras
-        $fechaActual = date('Y-m-d');
-        $consulta = "SELECT * FROM citas WHERE fecha >= '${fechaActual}' ORDER BY fecha ASC, hora ASC";
-        try {
-            $citas = Cita::SQL($consulta);
-            echo json_encode($citas);
-        } catch (\Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
-        }
-    }
-
-    // 1. MICROSERVICIO LOGIN
+    // --- MICROSERVICIOS ---
     public static function auth() {
-        $email = $_GET['email'] ?? $_POST['email'] ?? '';
-        $password = $_GET['password'] ?? $_POST['password'] ?? '';
-        
         $service = new AuthService();
-        echo json_encode($service->login($email, $password));
+        echo json_encode($service->login($_GET['email']??'', $_GET['password']??''));
     }
 
-    // 2. NOTIFICACIÓN (REAL - MAIL)
     public static function notificar() {
-        $email = $_GET['email'] ?? '';
-        $mensaje = $_GET['mensaje'] ?? 'Prueba de servicio real';
-        
         $service = new NotificacionService();
-        echo json_encode($service->enviarCorreo($email, 'Aviso Importante', $mensaje));
+        echo json_encode($service->enviarCorreo($_GET['email']??'', 'Aviso', $_GET['mensaje']??''));
     }
 
-    // 5. MICROSERVICIO REPORTES
-    public static function reporte() {
-        $service = new ReporteService();
-        echo json_encode($service->generarResumenDiario());
+    public static function citas() {
+        $fecha = $_GET['fecha'] ?? date('Y-m-d');
+        $sql = "SELECT * FROM citas WHERE fecha = '$fecha'";
+        echo json_encode(Cita::SQL($sql));
     }
     
+    public static function catalogo() { $s = new CatalogoService(); echo json_encode($s->listarServicios()); }
+    public static function reporte() { $s = new ReporteService(); echo json_encode($s->generarResumenDiario()); }
 }

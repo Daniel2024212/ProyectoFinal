@@ -1,18 +1,15 @@
 let paso = 1;
 const pasoInicial = 1;
-const pasoFinal = 3;
+const pasoFinal = 3; // CAMBIO: El último paso ahora es el 4 (Pago)
 
-// Objeto principal
 const cita = {
     id: '',
     nombre: '',
     fecha: '',
     hora: '',
-    servicios: []
-}
-
-// Variable global para citas ocupadas
-let citasDelDia = [];
+    servicios: [],
+    citaIdGenerada: null 
+};
 
 document.addEventListener('DOMContentLoaded', function() {
     iniciarApp();
@@ -25,39 +22,45 @@ function iniciarApp() {
     paginaSiguiente();
     paginaAnterior();
 
-    consultarAPI(); // Carga servicios
+    consultarAPI();
 
     idCliente();
     nombreCliente();
-    
-    seleccionarFecha(); // Descarga citas ocupadas
-    seleccionarHora();  // Valida los 15 minutos
+    seleccionarFecha();
+    seleccionarHora();
 
-    mostrarResumen();
+    listenerPagar();
+    // SE ELIMINÓ listenerValorar();
 }
 
 function mostrarSeccion() {
     const seccionAnterior = document.querySelector('.mostrar');
-    if(seccionAnterior) {
-        seccionAnterior.classList.remove('mostrar');
-    }
+    if(seccionAnterior) seccionAnterior.classList.remove('mostrar');
+
     const pasoSelector = `#paso-${paso}`;
     const seccion = document.querySelector(pasoSelector);
     seccion.classList.add('mostrar');
 
     const tabAnterior = document.querySelector('.actual');
-    if(tabAnterior) {
-        tabAnterior.classList.remove('actual');
-    }
+    if(tabAnterior) tabAnterior.classList.remove('actual');
+
     const tab = document.querySelector(`[data-paso="${paso}"]`);
     tab.classList.add('actual');
 }
 
 function tabs() {
     const botones = document.querySelectorAll('.tabs button');
-    botones.forEach( boton => {
+    botones.forEach(boton => {
         boton.addEventListener('click', function(e) {
-            paso = parseInt( e.target.dataset.paso );
+            const pasoDeseado = parseInt(e.target.dataset.paso);
+            
+            // Validación para evitar saltar al pago sin crear la cita
+            if(pasoDeseado === 3 && !cita.citaIdGenerada) {
+                Swal.fire('Atención', 'Debes confirmar la cita en el Resumen antes de pagar', 'warning');
+                return;
+            }
+
+            paso = pasoDeseado;
             mostrarSeccion();
             botonesPaginador();
         });
@@ -71,15 +74,17 @@ function botonesPaginador() {
     if(paso === 1) {
         paginaAnterior.classList.add('ocultar');
         paginaSiguiente.classList.remove('ocultar');
-    } else if (paso === 3) {
+    } else if (paso === pasoFinal) {
         paginaAnterior.classList.remove('ocultar');
         paginaSiguiente.classList.add('ocultar');
-        mostrarResumen();
     } else {
         paginaAnterior.classList.remove('ocultar');
         paginaSiguiente.classList.remove('ocultar');
     }
-    mostrarSeccion();
+
+    if(paso === 3) {
+        mostrarResumen();
+    }
 }
 
 function paginaAnterior() {
@@ -88,6 +93,7 @@ function paginaAnterior() {
         if(paso <= pasoInicial) return;
         paso--;
         botonesPaginador();
+        mostrarSeccion();
     });
 }
 
@@ -97,12 +103,13 @@ function paginaSiguiente() {
         if(paso >= pasoFinal) return;
         paso++;
         botonesPaginador();
+        mostrarSeccion();
     });
 }
 
 async function consultarAPI() {
     try {
-        const url = '/api/servicios'; 
+        const url = '/api/servicios';
         const resultado = await fetch(url);
         const servicios = await resultado.json();
         mostrarServicios(servicios);
@@ -112,8 +119,8 @@ async function consultarAPI() {
 }
 
 function mostrarServicios(servicios) {
-    servicios.forEach( servicio => {
-        const { id, nombre, precio } = servicio;
+    servicios.forEach(servicio => {
+        const {id, nombre, precio} = servicio;
 
         const nombreServicio = document.createElement('P');
         nombreServicio.classList.add('nombre-servicio');
@@ -138,8 +145,8 @@ function mostrarServicios(servicios) {
 }
 
 function seleccionarServicio(servicio) {
-    const { id } = servicio;
-    const { servicios } = cita;
+    const {id} = servicio;
+    const {servicios} = cita;
     const divServicio = document.querySelector(`[data-id-servicio="${id}"]`);
 
     if( servicios.some( agregado => agregado.id === id ) ) {
@@ -154,112 +161,40 @@ function seleccionarServicio(servicio) {
 function idCliente() {
     cita.id = document.querySelector('#id').value;
 }
-
 function nombreCliente() {
     cita.nombre = document.querySelector('#nombre').value;
 }
 
-// ===============================================
-// 1. SELECCIÓN DE FECHA Y CARGA DE CITAS OCUPADAS
-// ===============================================
-
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
-    
     inputFecha.addEventListener('input', function(e) {
         const dia = new Date(e.target.value).getUTCDay();
-
-        // Validar Fines de Semana
         if( [6, 0].includes(dia) ) {
             e.target.value = '';
             mostrarAlerta('Fines de semana no permitidos', 'error', '.formulario');
         } else {
             cita.fecha = e.target.value;
-            // Descargar citas existentes para validación matemática
-            buscarCitasPorFecha(cita.fecha);
         }
     });
 }
 
-async function buscarCitasPorFecha(fecha) {
-    try {
-        // IMPORTANTE: Usamos la ruta del microservicio GET
-        const url = `/api/ms/citas?fecha=${fecha}`; 
-        
-        const respuesta = await fetch(url);
-        const resultado = await respuesta.json();
-
-        // Guardamos las citas encontradas
-        // Soporte si la API devuelve {agenda: [...]} o [...]
-        citasDelDia = resultado.agenda || resultado;
-        
-        console.log(`Citas encontradas para ${fecha}:`, citasDelDia);
-
-    } catch (error) {
-        console.log('Error API Citas:', error);
-        citasDelDia = []; 
-    }
-}
-
-// ===============================================
-// 2. VALIDACIÓN MATEMÁTICA DE 15 MINUTOS
-// ===============================================
-
 function seleccionarHora() {
     const inputHora = document.querySelector('#hora');
-    
     inputHora.addEventListener('input', function(e) {
-        const horaUsuario = e.target.value;
-        const hora = horaUsuario.split(":")[0];
-
-        // A. Validar Horario Comercial
-        if(hora < 9 || hora > 20) {
+        const horaCita = e.target.value;
+        const hora = horaCita.split(":")[0];
+        if(hora < 10 || hora > 18) {
             e.target.value = '';
-            mostrarAlerta('Hora no válida. Abrimos de 9:00 a 20:00', 'error', '.formulario');
-            return;
-        }
-
-        // B. Validar Colisión con citas existentes
-        // Si no hay citas ese día, permitimos todo
-        if(citasDelDia.length === 0) {
-            cita.hora = e.target.value;
-            return;
-        }
-
-        // Recorremos el array buscando choques
-        const choca = citasDelDia.some(citaBD => {
-            
-            // Convertir Hora BD (ej: "10:30:00") a Minutos Totales
-            const horaBDArr = citaBD.hora.split(":"); 
-            const minutosBD = (parseInt(horaBDArr[0]) * 60) + parseInt(horaBDArr[1]);
-
-            // Convertir Hora Usuario (ej: "10:40") a Minutos Totales
-            const horaUserArr = horaUsuario.split(":");
-            const minutosUser = (parseInt(horaUserArr[0]) * 60) + parseInt(horaUserArr[1]);
-
-            // Diferencia Absoluta
-            const diferencia = Math.abs(minutosBD - minutosUser);
-            
-            console.log(`Comparando: BD(${citaBD.hora}) vs User(${horaUsuario}) | Dif: ${diferencia} min`);
-
-            // REGLA DE ORO: Menos de 15 minutos = Bloqueado
-            return diferencia < 15;
-        });
-
-        if(choca) {
-            e.target.value = ''; // Borramos la hora seleccionada
-            mostrarAlerta('Horario ocupado. Deja al menos 15 mins entre citas.', 'error', '.formulario');
+            mostrarAlerta('Hora no válida', 'error', '.formulario');
         } else {
-            cita.hora = e.target.value; // Hora válida
+            cita.hora = horaCita;
         }
     });
 }
 
 function mostrarAlerta(mensaje, tipo, elemento, desaparece = true) {
     const alertaPrevia = document.querySelector('.alerta');
-    if(alertaPrevia) {
-        alertaPrevia.remove();
-    }
+    if(alertaPrevia) alertaPrevia.remove();
 
     const alerta = document.createElement('DIV');
     alerta.textContent = mensaje;
@@ -288,14 +223,14 @@ function mostrarResumen() {
         return;
     }
 
-    const { nombre, fecha, hora, servicios } = cita;
+    const {nombre, fecha, hora, servicios} = cita;
 
     const headingServicios = document.createElement('H3');
     headingServicios.textContent = 'Resumen de Servicios';
     resumen.appendChild(headingServicios);
 
     servicios.forEach(servicio => {
-        const { id, precio, nombre } = servicio;
+        const {id, precio, nombre} = servicio;
         const contenedorServicio = document.createElement('DIV');
         contenedorServicio.classList.add('contenedor-servicio');
 
@@ -315,13 +250,13 @@ function mostrarResumen() {
     resumen.appendChild(headingCita);
 
     const nombreCliente = document.createElement('P');
-    nombreCliente.innerHTML = `<span>Cliente:</span> ${nombre}`;
+    nombreCliente.innerHTML = `<span>Nombre:</span> ${nombre}`;
 
     const fechaObj = new Date(fecha);
     const mes = fechaObj.getMonth();
     const dia = fechaObj.getDate() + 2;
     const year = fechaObj.getFullYear();
-    const fechaUTC = new Date(Date.UTC(year, mes, dia));
+    const fechaUTC = new Date( Date.UTC(year, mes, dia));
     const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
     const fechaFormateada = fechaUTC.toLocaleDateString('es-MX', opciones);
 
@@ -333,7 +268,7 @@ function mostrarResumen() {
 
     const botonReservar = document.createElement('BUTTON');
     botonReservar.classList.add('boton');
-    botonReservar.textContent = 'Reservar Cita';
+    botonReservar.textContent = 'Confirmar Cita';
     botonReservar.onclick = reservarCita;
 
     resumen.appendChild(nombreCliente);
@@ -343,7 +278,7 @@ function mostrarResumen() {
 }
 
 async function reservarCita() {
-    const { nombre, fecha, hora, servicios, id } = cita;
+    const {nombre, fecha, hora, servicios, id} = cita;
     const idServicios = servicios.map( servicio => servicio.id );
 
     const datos = new FormData();
@@ -353,7 +288,7 @@ async function reservarCita() {
     datos.append('servicios', idServicios);
 
     try {
-        const url = '/api/citas'; // POST para guardar
+        const url = '/api/citas';
         const respuesta = await fetch(url, {
             method: 'POST',
             body: datos
@@ -362,28 +297,24 @@ async function reservarCita() {
         const resultado = await respuesta.json();
 
         if(resultado.resultado) {
+            cita.citaIdGenerada = resultado.id; 
+            
             Swal.fire({
                 icon: 'success',
                 title: 'Cita Creada',
-                text: 'Tu cita fue creada correctamente',
+                text: 'Tu cita fue creada correctamente. ID: ' + resultado.id,
                 button: 'OK'
             }).then( () => {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            })
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: resultado.error || 'Hubo un error al guardar'
+                paso = 3;
+                mostrarSeccion();
+                botonesPaginador();
             });
         }
     } catch (error) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Hubo un error de conexión'
+            text: 'Hubo un error al guardar la cita'
         });
     }
 }
