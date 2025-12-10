@@ -278,7 +278,7 @@ function mostrarResumen() {
 }
 
 async function reservarCita() {
-    const {nombre, fecha, hora, servicios, id} = cita;
+    const { nombre, fecha, hora, servicios, id } = cita;
     const idServicios = servicios.map( servicio => servicio.id );
 
     const datos = new FormData();
@@ -288,7 +288,7 @@ async function reservarCita() {
     datos.append('servicios', idServicios);
 
     try {
-        const url = '/api/citas';
+        const url = '/api/citas'; // POST para guardar
         const respuesta = await fetch(url, {
             method: 'POST',
             body: datos
@@ -297,24 +297,32 @@ async function reservarCita() {
         const resultado = await respuesta.json();
 
         if(resultado.resultado) {
-            cita.citaIdGenerada = resultado.id; 
-            
+            // CASO ÉXITO
             Swal.fire({
                 icon: 'success',
                 title: 'Cita Creada',
-                text: 'Tu cita fue creada correctamente. ID: ' + resultado.id,
+                text: 'Tu cita fue creada correctamente',
                 button: 'OK'
             }).then( () => {
-                paso = 3;
-                mostrarSeccion();
-                botonesPaginador();
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            })
+        } else {
+            // CASO ERROR DE HORARIO (AQUÍ ESTÁ EL CAMBIO)
+            Swal.fire({
+                icon: 'warning', // Cambiamos a 'warning' (Amarillo) para que sea una advertencia
+                title: 'Cambia la Hora a 15 minutos de diferencia',
+                text: resultado.error, // Muestra: "Horario no disponible... debe haber 15 min..."
+                confirmButtonText: 'Entendido, cambiaré la hora'
             });
         }
     } catch (error) {
+        // CASO ERROR DE CONEXIÓN
         Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'Hubo un error al guardar la cita'
+            title: 'Error de Conexión',
+            text: 'No se pudo conectar con el servidor.'
         });
     }
 }
