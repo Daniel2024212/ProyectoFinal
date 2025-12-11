@@ -1,60 +1,43 @@
 <?php 
-
 require_once __DIR__ . '/../includes/app.php';
 
-use Controllers\AdminController;
-use Controllers\APIController;
-use Controllers\CitaController;
-use Controllers\LoginController;
-use Controllers\ServicioController;
 use MVC\Router;
+// Importamos los 3 Microservicios
+use Controllers\AuthMicroservice;
+use Controllers\CitaMicroservice;
+use Controllers\CatalogoMicroservice;
+use Controllers\LoginController; // Para las vistas HTML
 
 $router = new Router();
 
-// Iniciar sesión:
+// --- ZONA VISTAS (Frontend) ---
 $router->get('/', [LoginController::class, 'login']);
 $router->post('/', [LoginController::class, 'login']);
 $router->get('/logout', [LoginController::class, 'logout']);
-
-// Recuperar password:
+$router->get('/crear-cuenta', [LoginController::class, 'crear']);
+$router->post('/crear-cuenta', [LoginController::class, 'crear']);
 $router->get('/olvide', [LoginController::class, 'olvide']);
 $router->post('/olvide', [LoginController::class, 'olvide']);
 $router->get('/recuperar', [LoginController::class, 'recuperar']);
 $router->post('/recuperar', [LoginController::class, 'recuperar']);
-
-// Crear cuenta:
-$router->get('/crear-cuenta', [LoginController::class, 'crear']);
-$router->post('/crear-cuenta', [LoginController::class, 'crear']);
-
-// Confirmar cuenta:
-$router->get('/confirmar-cuenta', [LoginController::class, 'confirmar']);
 $router->get('/mensaje', [LoginController::class, 'mensaje']);
-
-// ÁREA PRIVADA:
-$router->get('/cita', [CitaController::class, 'index']);
-$router->get('/admin', [AdminController::class, 'index']);
-
-// API de Citas:
-$router->get('/api/servicios', [APIController::class, 'index']);
-$router->post('/api/citas', [APIController::class, 'guardar']);
-$router->post('/api/eliminar', [APIController::class, 'eliminar']);
-
-// microservicios:
-$router->get('/api/citas/programadas', [APIController::class, 'programadas']);
-$router->post('/api/notificar', [APIController::class, 'notificar']);
-$router->get('/api/ms/auth',       [APIController::class, 'auth']);
-$router->get('/api/ms/notificar',  [APIController::class, 'notificar']);
-$router->get('/api/ms/reporte',    [APIController::class, 'reporte']);
-
-// CRUD de servicios:
-$router->get('/servicios', [ServicioController::class, 'index']);
-$router->get('/servicios/crear', [ServicioController::class, 'crear']);
-$router->post('/servicios/crear', [ServicioController::class, 'crear']);
-$router->get('/servicios/actualizar', [ServicioController::class, 'actualizar']);
-$router->post('/servicios/actualizar', [ServicioController::class, 'actualizar']);
-$router->post('/servicios/eliminar', [ServicioController::class, 'eliminar']);
+$router->get('/confirmar-cuenta', [LoginController::class, 'confirmar']);
+$router->get('/cita', [Controllers\CitaController::class, 'index']); // Vista de la app
+$router->get('/admin', [Controllers\AdminController::class, 'index']); 
 
 
-// Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
+// --- ZONA MICROSERVICIOS (Backend API) ---
+
+// 1. Microservicio de Catálogo
+$router->get('/api/servicios', [CatalogoMicroservice::class, 'index']);
+
+// 2. Microservicio de Citas
+$router->get('/api/citas', [CitaMicroservice::class, 'index']);  // Ver citas
+$router->post('/api/citas', [CitaMicroservice::class, 'guardar']); // Guardar cita
+
+// 3. Microservicio de Autenticación
+$router->get('/api/auth/login', [AuthMicroservice::class, 'login']);
+
+
+// --- EJECUCIÓN ---
 $router->comprobarRutas();
-
