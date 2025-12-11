@@ -291,12 +291,16 @@ function mostrarResumen() {
     resumen.appendChild(botonReservar);
 }
 
-// --- FUNCIÓN PARA GUARDAR Y MOSTRAR ALERTA DE HORARIO ---
 async function reservarCita() {
-    
     const { nombre, fecha, hora, servicios, id } = cita;
+    
+    // Validar campos vacíos antes de enviar
+    if( [fecha, hora].includes('') ) {
+         Swal.fire({icon: 'error', title: 'Faltan datos', text: 'Selecciona fecha y hora'});
+         return;
+    }
+    
     const idServicios = servicios.map( servicio => servicio.id );
-
     const datos = new FormData();
     datos.append('fecha', fecha);
     datos.append('hora', hora);
@@ -310,20 +314,24 @@ async function reservarCita() {
             body: datos
         });
 
-        // Intentamos leer la respuesta como JSON
+        // 1. LEER RESPUESTA COMO TEXTO PRIMERO (Para ver si es JSON o Error HTML)
+        const texto = await respuesta.text();
+        
         let resultado;
         try {
-            resultado = await respuesta.json();
-        } catch (e) {
-            // Si no es JSON (es error fatal de PHP)
+            resultado = JSON.parse(texto);
+        } catch (error) {
+            // SI ENTRA AQUÍ, ES QUE PHP TRONÓ (PANTALLA BLANCA)
+            console.error('Error PHP:', texto); // Ver error en consola
             Swal.fire({
                 icon: 'error',
-                title: 'Error de Servidor',
-                text: 'Hubo un error interno en el servidor (PHP Error). Revisa la consola.'
+                title: 'Error Fatal',
+                text: 'El servidor falló. Revisa la consola (F12) para ver el error.'
             });
             return;
         }
 
+        // 2. ANALIZAR EL RESULTADO JSON
         if(resultado.resultado) {
             // ÉXITO
             Swal.fire({
@@ -332,24 +340,22 @@ async function reservarCita() {
                 text: 'Tu cita fue creada correctamente',
                 button: 'OK'
             }).then( () => {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
+                setTimeout(() => { window.location.reload(); }, 1500);
             })
         } else {
-            // ERROR O ADVERTENCIA (15 MINUTOS)
+            // ERROR DE VALIDACIÓN (AQUÍ DEBE SALIR TU MENSAJE DE 15 MIN)
             Swal.fire({
-                icon: 'warning', // Icono amarillo
-                title: 'Atención',
-                text: resultado.error || 'No se pudo guardar la cita',
-                confirmButtonText: 'Entendido'
+                icon: 'warning',
+                title: 'Hora no disponible',
+                text: resultado.error // Mensaje que viene del PHP
             });
         }
+
     } catch (error) {
         Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'Hubo un error al conectar con el servidor'
+            title: 'Error de Red',
+            text: 'No hubo conexión con el servidor.'
         });
     }
 }
