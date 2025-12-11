@@ -29,62 +29,36 @@ class APIController {
     // --- FUNCIÓN PRINCIPAL DE GUARDADO CON VALIDACIÓN ---
     public static function guardar() {
         
-        // 1. Carga manual de modelos (Anti-error Linux)
-        if(file_exists(__DIR__ . '/../models/Cita.php')) require_once __DIR__ . '/../models/Cita.php';
-        if(file_exists(__DIR__ . '/../models/CitaServicio.php')) require_once __DIR__ . '/../models/CitaServicio.php';
+        // Carga segura del modelo
+        if(!class_exists('Model\Cita')) {
+            if(file_exists(__DIR__ . '/../models/Cita.php')) require_once __DIR__ . '/../models/Cita.php';
+        }
 
         try {
-            // --- VALIDACIÓN DE 15 MINUTOS Y DISPONIBILIDAD ---
-            $fecha = $_POST['fecha'];
-            $horaNueva = $_POST['hora'];
-            
-            // Consultar citas existentes de ese día
-            $query = "SELECT hora FROM citas WHERE fecha = '{$fecha}'";
-            $citas = \Models\Cita::SQL($query);
+            // --- YA NO HAY VALIDACIÓN DE 15 MINUTOS ---
+            // Guardamos directamente lo que el usuario envió
 
-            foreach($citas as $cita) {
-                $horaExistente = strtotime($cita->hora);
-                $horaIntento = strtotime($horaNueva);
-
-                // Diferencia en minutos (valor absoluto)
-                $diferencia = abs($horaExistente - $horaIntento) / 60;
-
-                // REGLA: Si hay menos de 15 minutos de diferencia
-                if($diferencia < 15) {
-                    $horaOcupada = date('H:i', $horaExistente);
-                    
-                    // MENSAJE DE ERROR CLARO Y ESPECÍFICO
-                    echo json_encode([
-                        'resultado' => false, 
-                        'error' => "Lo sentimos, la hora {$horaOcupada} ya está ocupada (o muy cerca). Por favor selecciona una hora con al menos 15 minutos de diferencia."
-                    ]);
-                    return; // Detenemos el guardado
-                }
-            }
-            // --- FIN VALIDACIÓN ---
-
-            // 2. Guardar Cita
-            $cita = new \Models\Cita($_POST);
+            // 1. Guardar la Cita
+            $cita = new Cita($_POST);
             $resultado = $cita->guardar();
             $id = $resultado['id'];
 
-            // 3. Guardar Servicios
+            // 2. Guardar los Servicios
             $idServicios = explode(",", $_POST['servicios']);
             foreach($idServicios as $idServicio) {
                 $args = [
                     'citaId' => $id,
                     'servicioId' => $idServicio
                 ];
-                $citaServicio = new \Models\CitaServicio($args);
+                $citaServicio = new CitaServicio($args);
                 $citaServicio->guardar();
             }
 
-            // ÉXITO
+            // Responder Éxito
             echo json_encode(['resultado' => $resultado]);
 
         } catch (\Throwable $e) {
-            // ERROR DE SERVIDOR
-            echo json_encode(['resultado' => false, 'error' => 'Ocurrió un error en el servidor: ' . $e->getMessage()]);
+            echo json_encode(['resultado' => false, 'error' => 'Error del Servidor: ' . $e->getMessage()]);
         }
     }
 
