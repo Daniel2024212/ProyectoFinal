@@ -306,7 +306,6 @@ async function reservarCita() {
     
     datos.append('fecha', fecha);
     datos.append('hora', hora);
-    datos.append('usuarioId', id);
     datos.append('servicios', idServicios);
     
     // --- ESTA ES LA LÍNEA NUEVA IMPORTANTE ---
