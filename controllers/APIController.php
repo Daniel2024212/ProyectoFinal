@@ -29,41 +29,41 @@ class APIController {
     // --- FUNCIÓN PRINCIPAL DE GUARDADO CON VALIDACIÓN ---
     public static function guardar() {
         
-        // 1. Carga manual de modelos (Seguridad Linux)
+        // 1. Carga manual de modelos (Anti-error Linux)
         if(file_exists(__DIR__ . '/../models/Cita.php')) require_once __DIR__ . '/../models/Cita.php';
         if(file_exists(__DIR__ . '/../models/CitaServicio.php')) require_once __DIR__ . '/../models/CitaServicio.php';
 
         try {
-            // --- INICIO: VALIDACIÓN DE 15 MINUTOS ---
+            // --- VALIDACIÓN DE 15 MINUTOS Y DISPONIBILIDAD ---
             $fecha = $_POST['fecha'];
             $horaNueva = $_POST['hora'];
             
-            // 1. Consultar todas las citas de ese día
+            // Consultar citas existentes de ese día
             $query = "SELECT hora FROM citas WHERE fecha = '{$fecha}'";
             $citas = \Models\Cita::SQL($query);
 
             foreach($citas as $cita) {
-                // Convertir horas a minutos para comparar
-                // Ej: "10:30:00" -> Timestamp
                 $horaExistente = strtotime($cita->hora);
                 $horaIntento = strtotime($horaNueva);
 
                 // Diferencia en minutos (valor absoluto)
                 $diferencia = abs($horaExistente - $horaIntento) / 60;
 
-                // Si la diferencia es menor a 15 minutos, bloqueamos
+                // REGLA: Si hay menos de 15 minutos de diferencia
                 if($diferencia < 15) {
+                    $horaOcupada = date('H:i', $horaExistente);
+                    
+                    // MENSAJE DE ERROR CLARO Y ESPECÍFICO
                     echo json_encode([
                         'resultado' => false, 
-                        'error' => "Horario no disponible. Ya existe una cita a las " . date('H:i', $horaExistente) . ". Debe haber 15 mins de diferencia."
+                        'error' => "Lo sentimos, la hora {$horaOcupada} ya está ocupada (o muy cerca). Por favor selecciona una hora con al menos 15 minutos de diferencia."
                     ]);
-                    return; // ¡IMPORTANTE! Detenemos el guardado aquí
+                    return; // Detenemos el guardado
                 }
             }
             // --- FIN VALIDACIÓN ---
 
-
-            // 2. Guardar Cita si pasó la validación
+            // 2. Guardar Cita
             $cita = new \Models\Cita($_POST);
             $resultado = $cita->guardar();
             $id = $resultado['id'];
@@ -79,11 +79,12 @@ class APIController {
                 $citaServicio->guardar();
             }
 
-            // Responder Éxito
+            // ÉXITO
             echo json_encode(['resultado' => $resultado]);
 
         } catch (\Throwable $e) {
-            echo json_encode(['resultado' => false, 'error' => 'Error del Servidor: ' . $e->getMessage()]);
+            // ERROR DE SERVIDOR
+            echo json_encode(['resultado' => false, 'error' => 'Ocurrió un error en el servidor: ' . $e->getMessage()]);
         }
     }
 
