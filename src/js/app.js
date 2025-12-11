@@ -292,20 +292,27 @@ function mostrarResumen() {
 }
 
 async function reservarCita() {
+    // Extraemos el 'nombre' del objeto cita (el que escribiste en el input)
     const { nombre, fecha, hora, servicios, id } = cita;
     
-    // Validar campos vacíos antes de enviar
-    if( [fecha, hora].includes('') ) {
-         Swal.fire({icon: 'error', title: 'Faltan datos', text: 'Selecciona fecha y hora'});
+    // Validaciones
+    if( [fecha, hora, nombre].includes('') ) { // Agregamos validación de nombre
+         Swal.fire({icon: 'error', title: 'Faltan datos', text: 'Revisa fecha, hora y nombre'});
          return;
     }
     
     const idServicios = servicios.map( servicio => servicio.id );
     const datos = new FormData();
+    
     datos.append('fecha', fecha);
     datos.append('hora', hora);
     datos.append('usuarioId', id);
     datos.append('servicios', idServicios);
+    
+    // --- ESTA ES LA LÍNEA NUEVA IMPORTANTE ---
+    // Enviamos el nombre escrito con la clave 'cliente' para que coincida con el Modelo
+    datos.append('cliente', nombre); 
+    // -----------------------------------------
 
     try {
         const url = '/api/citas';
@@ -314,48 +321,43 @@ async function reservarCita() {
             body: datos
         });
 
-        // 1. LEER RESPUESTA COMO TEXTO PRIMERO (Para ver si es JSON o Error HTML)
         const texto = await respuesta.text();
         
         let resultado;
         try {
             resultado = JSON.parse(texto);
         } catch (error) {
-            // SI ENTRA AQUÍ, ES QUE PHP TRONÓ (PANTALLA BLANCA)
-            console.error('Error PHP:', texto); // Ver error en consola
             Swal.fire({
                 icon: 'error',
                 title: 'Error Fatal',
-                text: 'El servidor falló. Revisa la consola (F12) para ver el error.'
+                text: 'Error en el servidor. Revisa consola.'
             });
+            console.error('PHP Error:', texto);
             return;
         }
 
-        // 2. ANALIZAR EL RESULTADO JSON
         if(resultado.resultado) {
-            // ÉXITO
             Swal.fire({
                 icon: 'success',
                 title: 'Cita Creada',
-                text: 'Tu cita fue creada correctamente',
+                text: `Cita registrada para: ${nombre}`, // Confirmación visual
                 button: 'OK'
             }).then( () => {
                 setTimeout(() => { window.location.reload(); }, 1500);
             })
         } else {
-            // ERROR DE VALIDACIÓN (AQUÍ DEBE SALIR TU MENSAJE DE 15 MIN)
             Swal.fire({
                 icon: 'warning',
-                title: 'Hora no disponible',
-                text: resultado.error // Mensaje que viene del PHP
+                title: 'Atención',
+                text: resultado.error || 'No se pudo guardar'
             });
         }
 
     } catch (error) {
         Swal.fire({
             icon: 'error',
-            title: 'Error de Red',
-            text: 'No hubo conexión con el servidor.'
+            title: 'Error',
+            text: 'Error de conexión'
         });
     }
 }
