@@ -7,7 +7,7 @@ use Controllers\AuthMicroservice;
 use Controllers\CitaMicroservice;
 use Controllers\CatalogoMicroservice;
 use Controllers\LoginController; // Para las vistas HTML
-
+use Controllers\ServicioController;
 $router = new Router();
 
 // --- ZONA VISTAS (Frontend) ---
@@ -24,7 +24,12 @@ $router->get('/mensaje', [LoginController::class, 'mensaje']);
 $router->get('/confirmar-cuenta', [LoginController::class, 'confirmar']);
 $router->get('/cita', [Controllers\CitaController::class, 'index']); // Vista de la app
 $router->get('/admin', [Controllers\AdminController::class, 'index']); 
-
+$router->get('/servicios', [ServicioController::class, 'index']);
+$router->get('/servicios/crear', [ServicioController::class, 'crear']);
+$router->post('/servicios/crear', [ServicioController::class, 'crear']);
+$router->get('/servicios/actualizar', [ServicioController::class, 'actualizar']);
+$router->post('/servicios/actualizar', [ServicioController::class, 'actualizar']);
+$router->post('/servicios/eliminar', [ServicioController::class, 'eliminar']);
 
 // --- ZONA MICROSERVICIOS (Backend API) ---
 
