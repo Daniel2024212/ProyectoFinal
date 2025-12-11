@@ -309,12 +309,15 @@ async function reservarCita() {
                 }, 1500);
             })
         } else {
-            // CASO ERROR DE HORARIO (AQUÍ ESTÁ EL CAMBIO)
+            // AQUÍ ESTÁ EL ARREGLO:
+            // Si 'resultado.error' viene vacío, usamos un texto genérico
+            const mensajeError = resultado.error || 'No se pudo guardar la cita (Error desconocido)';
+
             Swal.fire({
-                icon: 'warning', // Cambiamos a 'warning' (Amarillo) para que sea una advertencia
-                title: 'Error en la hora seleccionada',
-                text: 'cambia la hora a 15 min despues', // Muestra: "Horario no disponible... debe haber 15 min..."
-                confirmButtonText: 'Entendido, cambiaré la hora'
+                icon: 'warning', // Icono amarillo de advertencia
+                title: 'Atención',
+                text: mensajeError, 
+                confirmButtonText: 'Entendido'
             });
         }
     } catch (error) {
