@@ -8,7 +8,7 @@
         <button class="actual" type="button" data-paso="1">1. Servicios</button>
         <button type="button" data-paso="2">2. Información</button>
         <button type="button" data-paso="3">3. Resumen</button>
-    </nav>
+        </nav>
 
     <div id="paso-1" class="seccion">
         <h2>Elige tus Servicios</h2>
@@ -23,11 +23,7 @@
         <form class="formulario">
             <div class="campo">
                 <label for="nombre">Nombre</label>
-                <input
-                    id="nombre"
-                    type="text"
-                    placeholder="Tu Nombre"
-                    value="<?php echo $nombre; ?>" />
+                <input id="nombre" type="text" placeholder="Tu Nombre" value="<?php echo s($nombre); ?>" disabled>
             </div>
 
             <div class="campo">
@@ -54,8 +50,8 @@
     </div>
 </div>
 
-<?php
-$script = "
+<?php 
+    $script = "
         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
         <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
         <script src='build/js/app.js'></script>
