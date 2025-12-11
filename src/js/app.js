@@ -15,32 +15,39 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function iniciarApp() {
-    mostrarSeccion(); 
-    tabs(); 
-    botonesPaginador(); 
+    mostrarSeccion(); // Muestra y oculta las secciones
+    tabs(); // Cambia la sección cuando se presionan los tabs
+    botonesPaginador(); // Agrega la paginación a los botones anterior y siguiente
     paginaSiguiente(); 
     paginaAnterior();
 
-    consultarAPI(); 
+    consultarAPI(); // Consulta la API en el backend de PHP
 
     idCliente(); 
-    nombreCliente(); 
-    seleccionarFecha(); 
-    seleccionarHora(); 
+    nombreCliente(); // Añade el nombre del cliente al objeto de cita
+    seleccionarFecha(); // Añade la fecha de la cita en el objeto
+    seleccionarHora(); // Añade la hora de la cita en el objeto
 
-    mostrarResumen(); 
+    mostrarResumen(); // Muestra el resumen de la cita
 }
 
 function mostrarSeccion() {
+    // 1. Ocultar la sección que tenga la clase de mostrar
     const seccionAnterior = document.querySelector('.mostrar');
-    if(seccionAnterior) seccionAnterior.classList.remove('mostrar');
+    if(seccionAnterior) {
+        seccionAnterior.classList.remove('mostrar');
+    }
 
-    const seccion = document.querySelector(`#paso-${paso}`);
+    // 2. Seleccionar la sección con el paso...
+    const pasoSelector = `#paso-${paso}`;
+    const seccion = document.querySelector(pasoSelector);
     seccion.classList.add('mostrar');
 
+    // 3. Resaltar el tab actual
     const tabAnterior = document.querySelector('.actual');
-    if(tabAnterior) tabAnterior.classList.remove('actual');
-
+    if(tabAnterior) {
+        tabAnterior.classList.remove('actual');
+    }
     const tab = document.querySelector(`[data-paso="${paso}"]`);
     tab.classList.add('actual');
 }
@@ -75,7 +82,8 @@ function botonesPaginador() {
 }
 
 function paginaAnterior() {
-    document.querySelector('#anterior').addEventListener('click', function() {
+    const paginaAnterior = document.querySelector('#anterior');
+    paginaAnterior.addEventListener('click', function() {
         if(paso <= pasoInicial) return;
         paso--;
         botonesPaginador();
@@ -83,7 +91,8 @@ function paginaAnterior() {
 }
 
 function paginaSiguiente() {
-    document.querySelector('#siguiente').addEventListener('click', function() {
+    const paginaSiguiente = document.querySelector('#siguiente');
+    paginaSiguiente.addEventListener('click', function() {
         if(paso >= pasoFinal) return;
         paso++;
         botonesPaginador();
@@ -96,6 +105,7 @@ async function consultarAPI() {
         const resultado = await fetch(url);
         const servicios = await resultado.json();
         mostrarServicios(servicios);
+    
     } catch (error) {
         console.log(error);
     }
@@ -122,6 +132,7 @@ function mostrarServicios(servicios) {
 
         servicioDiv.appendChild(nombreServicio);
         servicioDiv.appendChild(precioServicio);
+
         document.querySelector('#servicios').appendChild(servicioDiv);
     });
 }
@@ -129,12 +140,17 @@ function mostrarServicios(servicios) {
 function seleccionarServicio(servicio) {
     const { id } = servicio;
     const { servicios } = cita;
+
+    // Identificar el elemento al que se le da click
     const divServicio = document.querySelector(`[data-id-servicio="${id}"]`);
 
+    // Comprobar si un servicio ya fue agregado 
     if( servicios.some( agregado => agregado.id === id ) ) {
+        // Eliminarlo
         cita.servicios = servicios.filter( agregado => agregado.id !== id );
         divServicio.classList.remove('seleccionado');
     } else {
+        // Agregarlo
         cita.servicios = [...servicios, servicio];
         divServicio.classList.add('seleccionado');
     }
@@ -150,7 +166,8 @@ function nombreCliente() {
 function seleccionarFecha() {
     const inputFecha = document.querySelector('#fecha');
     inputFecha.addEventListener('input', function(e) {
-        // Validación 1: Fines de Semana
+        
+        // Validación de Fines de Semana (Sábados y Domingos)
         const dia = new Date(e.target.value).getUTCDay();
         if( [6, 0].includes(dia) ) {
             e.target.value = '';
@@ -164,13 +181,13 @@ function seleccionarFecha() {
 function seleccionarHora() {
     const inputHora = document.querySelector('#hora');
     inputHora.addEventListener('input', function(e) {
-        const horaUsuario = e.target.value;
-        const hora = horaUsuario.split(":")[0];
-
-        // Validación 2: Horario Comercial (9am - 8pm)
+        const horaCita = e.target.value;
+        const hora = horaCita.split(":")[0];
+        
+        // Validación de Horario Comercial (9am a 8pm)
         if(hora < 9 || hora > 20) {
             e.target.value = '';
-            mostrarAlerta('Hora no válida (9:00am - 8:00pm)', 'error', '.formulario');
+            mostrarAlerta('Hora No Válida', 'error', '.formulario');
         } else {
             cita.hora = e.target.value;
         }
@@ -178,9 +195,13 @@ function seleccionarHora() {
 }
 
 function mostrarAlerta(mensaje, tipo, elemento, desaparece = true) {
+    // Previene que se generen muchas alertas
     const alertaPrevia = document.querySelector('.alerta');
-    if(alertaPrevia) alertaPrevia.remove();
+    if(alertaPrevia) {
+        alertaPrevia.remove();
+    }
 
+    // Scripting para crear la alerta
     const alerta = document.createElement('DIV');
     alerta.textContent = mensaje;
     alerta.classList.add('alerta');
@@ -190,27 +211,37 @@ function mostrarAlerta(mensaje, tipo, elemento, desaparece = true) {
     referencia.appendChild(alerta);
 
     if(desaparece) {
-        setTimeout(() => { alerta.remove(); }, 3000);
+        // Eliminar la alerta
+        setTimeout(() => {
+            alerta.remove();
+        }, 3000);
     }
 }
 
 function mostrarResumen() {
     const resumen = document.querySelector('.contenido-resumen');
-    while(resumen.firstChild) resumen.removeChild(resumen.firstChild);
+
+    // Limpiar el Contenido de Resumen
+    while(resumen.firstChild) {
+        resumen.removeChild(resumen.firstChild);
+    }
 
     if(Object.values(cita).includes('') || cita.servicios.length === 0 ) {
         mostrarAlerta('Faltan datos de Servicios, Fecha u Hora', 'error', '.contenido-resumen', false);
         return;
     }
 
+    // Formatear el div de resumen
     const { nombre, fecha, hora, servicios } = cita;
 
+    // Header para Servicios
     const headingServicios = document.createElement('H3');
     headingServicios.textContent = 'Resumen de Servicios';
     resumen.appendChild(headingServicios);
 
+    // Iterando y mostrando los servicios
     servicios.forEach(servicio => {
-        const { precio, nombre } = servicio;
+        const { id, precio, nombre } = servicio;
         const contenedorServicio = document.createElement('DIV');
         contenedorServicio.classList.add('contenedor-servicio');
 
@@ -225,6 +256,7 @@ function mostrarResumen() {
         resumen.appendChild(contenedorServicio);
     });
 
+    // Header para Cita
     const headingCita = document.createElement('H3');
     headingCita.textContent = 'Resumen de Cita';
     resumen.appendChild(headingCita);
@@ -232,6 +264,7 @@ function mostrarResumen() {
     const nombreCliente = document.createElement('P');
     nombreCliente.innerHTML = `<span>Cliente:</span> ${nombre}`;
 
+    // Formatear la fecha en español
     const fechaObj = new Date(fecha);
     const mes = fechaObj.getMonth();
     const dia = fechaObj.getDate() + 2;
@@ -246,6 +279,7 @@ function mostrarResumen() {
     const horaCita = document.createElement('P');
     horaCita.innerHTML = `<span>Hora:</span> ${hora} Horas`;
 
+    // Boton para Crear una cita
     const botonReservar = document.createElement('BUTTON');
     botonReservar.classList.add('boton');
     botonReservar.textContent = 'Reservar Cita';
@@ -257,9 +291,10 @@ function mostrarResumen() {
     resumen.appendChild(botonReservar);
 }
 
-// --- FUNCIÓN PRINCIPAL DE RESERVA ---
+// --- FUNCIÓN PARA GUARDAR Y MOSTRAR ALERTA DE HORARIO ---
 async function reservarCita() {
-    const { fecha, hora, servicios, id } = cita;
+    
+    const { nombre, fecha, hora, servicios, id } = cita;
     const idServicios = servicios.map( servicio => servicio.id );
 
     const datos = new FormData();
@@ -269,12 +304,25 @@ async function reservarCita() {
     datos.append('servicios', idServicios);
 
     try {
-        const url = '/api/citas'; 
+        const url = '/api/citas';
         const respuesta = await fetch(url, {
             method: 'POST',
             body: datos
         });
-        const resultado = await respuesta.json();
+
+        // Intentamos leer la respuesta como JSON
+        let resultado;
+        try {
+            resultado = await respuesta.json();
+        } catch (e) {
+            // Si no es JSON (es error fatal de PHP)
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Servidor',
+                text: 'Hubo un error interno en el servidor (PHP Error). Revisa la consola.'
+            });
+            return;
+        }
 
         if(resultado.resultado) {
             // ÉXITO
@@ -284,25 +332,24 @@ async function reservarCita() {
                 text: 'Tu cita fue creada correctamente',
                 button: 'OK'
             }).then( () => {
-                setTimeout(() => { window.location.reload(); }, 1500);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
             })
         } else {
-            // ERROR DE HORARIO (15 mins)
-            // Leemos el mensaje específico que envió el PHP
-            const mensaje = resultado.error || 'Error al guardar. Intenta otro horario.';
-
+            // ERROR O ADVERTENCIA (15 MINUTOS)
             Swal.fire({
-                icon: 'error', // Usamos el icono de Error para que sea visible
-                title: 'Hora no disponible',
-                text: mensaje, // Aquí se verá: "Lo sentimos, la hora XX:XX ya está ocupada..."
-                button: 'Entendido'
+                icon: 'warning', // Icono amarillo
+                title: 'Atención',
+                text: resultado.error || 'No se pudo guardar la cita',
+                confirmButtonText: 'Entendido'
             });
         }
     } catch (error) {
         Swal.fire({
             icon: 'error',
-            title: 'Error de Conexión',
-            text: 'Hubo un error al guardar la cita'
+            title: 'Error',
+            text: 'Hubo un error al conectar con el servidor'
         });
     }
 }
