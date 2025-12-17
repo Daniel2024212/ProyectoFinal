@@ -43,7 +43,7 @@ $router->post('/servicios/eliminar', [ServicioController::class, 'eliminar']);
 // Microservicio de Citas (Independiente)
 $router->get('/api/citas', [CitaMicroservice::class, 'index']);
 $router->post('/api/citas', [CitaMicroservice::class, 'guardar']);
-
+$router->post('/api/citas/eliminar', [CitaMicroservice::class, 'eliminar']);
 // Microservicio de Catálogo (Independiente)
 $router->get('/api/servicios', [CatalogoMicroservice::class, 'index']);
 
