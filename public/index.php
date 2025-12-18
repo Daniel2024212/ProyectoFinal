@@ -3,7 +3,9 @@
 require_once __DIR__ . '/../includes/app.php';
 
 use Controllers\AdminController;
-use Controllers\APIController;
+use Controllers\CitaMicroservice;
+use Controllers\CatalogoMicroservice;
+use Controllers\AuthMicroservice;
 use Controllers\CitaController;
 use Controllers\LoginController;
 use Controllers\ServicioController;
@@ -35,9 +37,9 @@ $router->get('/cita', [CitaController::class, 'index']);
 $router->get('/admin', [AdminController::class, 'index']);
 
 // API de Citas:
-$router->get('/api/servicios', [APIController::class, 'index']);
-$router->post('/api/citas', [APIController::class, 'guardar']);
-$router->post('/api/eliminar', [APIController::class, 'eliminar']);
+$router->get('/api/servicios', [CatalogoMicroservice::class, 'index']);
+$router->post('/api/citas', [CitaMicroservice::class, 'guardar']);
+$router->post('/api/eliminar', [CitaMicroservice::class, 'eliminar']);
 
 // CRUD de servicios:
 $router->get('/servicios', [ServicioController::class, 'index']);
