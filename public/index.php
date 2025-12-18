@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../includes/app.php';
 
 use Controllers\AdminController;
-use Controllers\CitaMicroservice;
+use Backend\CitaMicroservice;
 use Controllers\CatalogoMicroservice;
 use Controllers\AuthMicroservice;
 use Controllers\CitaController;
