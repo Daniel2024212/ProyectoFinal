@@ -1,20 +1,16 @@
 <?php 
+
 require_once __DIR__ . '/../includes/app.php';
 
-use Classes\CitaService;
-use MVC\Router;
-// --- IMPORTAMOS LOS NUEVOS MICROSERVICIOS ---
-use Controllers\CitaMicroservice;
-use Controllers\CatalogoMicroservice;
-use Controllers\AuthMicroservice;
-
-// (Tus otros controladores normales...)
-use Controllers\LoginController;
-use Controllers\CitaController;
 use Controllers\AdminController;
-use Controllers\ServicioController; 
+use Controllers\APIController;
+use Controllers\CitaController;
+use Controllers\LoginController;
+use Controllers\ServicioController;
+use MVC\Router;
 
 $router = new Router();
+
 // Iniciar sesión:
 $router->get('/', [LoginController::class, 'login']);
 $router->post('/', [LoginController::class, 'login']);
@@ -39,9 +35,9 @@ $router->get('/cita', [CitaController::class, 'index']);
 $router->get('/admin', [AdminController::class, 'index']);
 
 // API de Citas:
-$router->get('/api/servicios', [CatalogoMicroservice::class, 'index']);
-$router->post('/api/citas', [CitaService::class, 'guardar']);
-$router->post('/api/eliminar', [CitaService::class, 'eliminar']);
+$router->get('/api/servicios', [APIController::class, 'index']);
+$router->post('/api/citas', [APIController::class, 'guardar']);
+$router->post('/api/eliminar', [APIController::class, 'eliminar']);
 
 // CRUD de servicios:
 $router->get('/servicios', [ServicioController::class, 'index']);
