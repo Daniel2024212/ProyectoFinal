@@ -1,14 +1,11 @@
 <?php
-namespace Backend; // <--- Namespace nuevo
+namespace backend;
 
 use Models\Servicio;
 
 class CatalogoMicroservice {
     public static function index() {
-        if(!class_exists('Model\Servicio')) {
-            if(file_exists(__DIR__ . '/../models/Servicio.php')) require_once __DIR__ . '/../models/Servicio.php';
-        }
-        
+        // Consulta directa al modelo Servicio
         $servicios = Servicio::all();
         echo json_encode($servicios);
     }

@@ -1,21 +1,18 @@
 <?php
-namespace Backend;
+namespace backend;
 
 use Models\Cita;
 use Models\CitaServicio;
 
 class CitaMicroservice {
 
-    // 1. VER: Obtener citas programadas
+    // GET: Obtener citas de una fecha
     public static function index() {
         $fecha = $_GET['fecha'] ?? date('Y-m-d');
         
-        // Carga de seguridad
-        if(!class_exists('Model\Cita')) {
-            if(file_exists(__DIR__ . '/../models/Cita.php')) require_once __DIR__ . '/../models/Cita.php';
-        }
-
+        // Consulta SQL directa para rapidez
         $sql = "SELECT * FROM citas WHERE fecha = '$fecha'";
+        
         try {
             $citas = Cita::SQL($sql);
             echo json_encode($citas);
@@ -24,66 +21,48 @@ class CitaMicroservice {
         }
     }
 
-    // 2. GUARDAR: Agendar una nueva cita
+    // POST: Guardar una nueva cita
     public static function guardar() {
-        
-        // Cargas de seguridad
-        if(!class_exists('Model\Cita')) require_once __DIR__ . '/../models/Cita.php';
-        
-        if(!class_exists('Model\CitaServicio')) {
-            if(file_exists(__DIR__ . '/../models/CitaServicio.php')) require_once __DIR__ . '/../models/CitaServicio.php';
-            else if(file_exists(__DIR__ . '/../models/citaservicio.php')) require_once __DIR__ . '/../models/citaservicio.php';
+        // Carga segura de modelos
+        if(!class_exists('Model\Cita')) {
+            if(file_exists(__DIR__ . '/../models/Cita.php')) require_once __DIR__ . '/../models/Cita.php';
         }
 
         try {
-            // Guardar Cita
+            // 1. Guardar la Cita (Con el nombre personalizado 'cliente')
             $cita = new Cita($_POST);
             $resultado = $cita->guardar();
-
-            if(!$resultado['resultado']) {
-                echo json_encode(['resultado' => false, 'error' => 'Error BD: No se pudo guardar']);
-                return;
-            }
-
-            // Guardar Servicios
             $id = $resultado['id'];
+
+            // 2. Guardar los Servicios relacionados
             $idServicios = explode(",", $_POST['servicios']);
-            
             foreach($idServicios as $idServicio) {
-                $args = ['citaId' => $id, 'servicioId' => $idServicio];
+                $args = [
+                    'citaId' => $id,
+                    'servicioId' => $idServicio
+                ];
                 $citaServicio = new CitaServicio($args);
                 $citaServicio->guardar();
             }
 
+            // ÉXITO
             echo json_encode(['resultado' => $resultado]);
 
         } catch (\Throwable $e) {
-            echo json_encode(['resultado' => false, 'error' => 'Error Backend: ' . $e->getMessage()]);
+            echo json_encode([
+                'resultado' => false, 
+                'error' => 'Error en Microservicio Citas: ' . $e->getMessage()
+            ]);
         }
     }
-
-    // 3. ELIMINAR: Borrar una cita (NUEVO)
     public static function eliminar() {
         if($_SERVER['REQUEST_METHOD'] === 'POST') {
-            
-            // Carga de seguridad
-            if(!class_exists('Model\Cita')) require_once __DIR__ . '/../models/Cita.php';
 
-            try {
-                $id = $_POST['id'];
-                $cita = Cita::find($id);
-                
-                if(!$cita) {
-                    echo json_encode(['resultado' => false, 'error' => 'Cita no encontrada']);
-                    return;
-                }
+            $id = $_POST['id'];
+            $cita = Cita::find($id);
+            $cita->eliminar();
 
-                $resultado = $cita->eliminar();
-                echo json_encode(['resultado' => $resultado]);
-
-            } catch (\Throwable $e) {
-                echo json_encode(['resultado' => false, 'error' => 'Error al eliminar: ' . $e->getMessage()]);
-            }
+            header('Location: ' . $_SERVER['HTTP_REFERER']);
         }
     }
 }
