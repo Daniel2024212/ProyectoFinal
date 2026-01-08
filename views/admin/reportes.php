@@ -121,56 +121,6 @@ else {
             flex-direction: column;
         }
 
-        /* 1. ESTILOS BARRA SUPERIOR (Usuario) */
-        .barra-usuario {
-            background-color: #000; /* Fondo negro */
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .barra-usuario p {
-            margin: 0;
-            font-size: 16px;
-            color: white;
-            font-weight: 500;
-        }
-        .barra-usuario span {
-            font-weight: 700;
-            color: var(--primary); /* Nombre en azul */
-        }
-        .btn-logout {
-            color: white;
-            text-decoration: none;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 14px;
-        }
-        .btn-logout:hover { color: #ddd; }
-
-
-        /* 2. ESTILOS BARRA NAVEGACIÓN AZUL */
-        .barra-azul {
-            background-color: var(--primary);
-            padding: 15px 40px;
-            display: flex;
-            gap: 25px;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: flex-start;
-        }
-        
-        .barra-azul a {
-            color: white;
-            text-decoration: none;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 14px;
-            text-align: center;
-        }
-        
-        .barra-azul a:hover { color: #000; }
-
         /* Contenedor principal */
         .contenedor-reporte {
             display: flex;
@@ -240,7 +190,6 @@ else {
         .precio-row { font-weight: 700; color: var(--accent); }
 
         @media (max-width: 900px) {
-            .barra-usuario, .barra-azul { justify-content: center; flex-direction: column; gap: 10px; text-align: center; }
             .panel-datos { padding: 20px; }
             .grid-kpis, .contenedor-graficas { grid-template-columns: 1fr; }
             .box-white { height: 300px; }
@@ -248,18 +197,6 @@ else {
     </style>
 </head>
 <body>
-
-    <div class="barra-usuario">
-        <p>Hola: <span><?php echo $nombre; ?></span></p>
-        <a href="/logout" class="btn-logout">Cerrar Sesión</a>
-    </div>
-
-    <div class="barra-azul">
-        <a href="/admin">Ver Citas</a>
-        <a href="/servicios">Ver Servicios</a>
-        <a href="/servicios/crear">Nuevo Servicio</a>
-        <a href="/admin/reportes">Ver Reportes</a>
-    </div>
 
     <div class="contenedor-reporte">
         <div class="panel-datos">
