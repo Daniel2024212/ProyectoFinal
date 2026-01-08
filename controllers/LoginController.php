@@ -398,4 +398,43 @@ class LoginController {
             'alertas' => $alertas
         ]);
     }
+
+    // --- 3. NUEVA FUNCIÓN: CREAR ADMIN ---
+    public static function crearAdmin(Router $router) {
+        $alertas = [];
+        $usuario = new Usuario; 
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $usuario->sincronizar($_POST);
+            $alertas = $usuario->validarNuevaCuenta();
+
+            if (empty($alertas)) {
+                $resultado = $usuario->existeUsuario();
+
+                if ($resultado->num_rows) {
+                    $alertas = Usuario::getAlertas();
+                } else {
+                    // Hashear password
+                    $usuario->hashPassword();
+
+                    // FORZAR ROLES DE ADMINISTRADOR
+                    $usuario->admin = "1";
+                    $usuario->confirmado = "1";
+                    $usuario->token = "";
+
+                    // Guardar
+                    $resultado = $usuario->guardar();
+
+                    if ($resultado) {
+                        header('Location: /login');
+                    }
+                }
+            }
+        }
+
+        $router->render('auth/crear_admin', [
+            'usuario' => $usuario,
+            'alertas' => $alertas
+        ]);
+    }
 }
