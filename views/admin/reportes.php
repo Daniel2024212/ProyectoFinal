@@ -1,4 +1,3 @@
-
 <?php include_once __DIR__ . '/../templates/barra.php'; ?>
 <?php
 // --- 1. CONFIGURACIÓN Y CONEXIÓN ---
@@ -7,7 +6,6 @@ error_reporting(E_ALL);
 
 global $db;
 if (empty($db)) {
-    // Ajusta esta ruta si es necesario para llegar a includes/database.php
     $ruta_db = __DIR__ . '/../../includes/database.php';
     if (file_exists($ruta_db)) include_once $ruta_db;
 }
@@ -94,15 +92,15 @@ else {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* --- ESTILOS DARK MODE --- */
+        /* --- ESTILOS DARK MODE (Fondo Negro) --- */
         :root {
-            --bg-body: #000000;
-            --bg-panel: #1a1a1a;
-            --text-main: #ffffff;
-            --text-light: #a0a0a0;
-            --primary: #0da6f3; /* Azul brillante como en tu imagen */
-            --accent: #2ecc71;
-            --border: #333333;
+            --bg-body: #000000;       /* Negro Puro */
+            --bg-panel: #1a1a1a;      /* Gris muy oscuro para tarjetas */
+            --text-main: #ffffff;     /* Texto Blanco */
+            --text-light: #a0a0a0;    /* Texto Gris Claro */
+            --primary: #3498db;       /* Azul */
+            --accent: #2ecc71;        /* Verde */
+            --border: #333333;        /* Bordes sutiles */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -116,44 +114,18 @@ else {
             flex-direction: column;
         }
 
-        /* ESTILOS PARA LA BARRA DE NAVEGACIÓN AZUL */
-        .barra-azul {
-            background-color: var(--primary);
-            padding: 15px 20px;
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: flex-start; /* Alineado a la izquierda como la imagen */
-        }
-        
-        .barra-azul a {
-            color: white;
-            text-decoration: none;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 14px;
-            text-align: center;
-        }
-        
-        .barra-azul a:hover {
-            color: #000;
-        }
-
-        /* Estilos generales del contenedor */
         .contenedor-reporte {
             display: flex;
-            flex-direction: column;
+            min-height: 100vh;
             width: 100%;
-            align-items: center;
-            flex: 1;
         }
 
+        /* DERECHA: Datos */
         .panel-datos {
-            width: 100%;
-            max-width: 1200px;
+            width: 65%;
             padding: 40px;
             background-color: var(--bg-body);
+            height: auto; 
         }
 
         h2 { font-weight: 700; margin-bottom: 25px; color: var(--text-main); font-size: 28px; }
@@ -174,11 +146,11 @@ else {
         .filtro-box input { 
             padding: 8px 12px; border: 1px solid #444; border-radius: 8px; 
             background: #222; color: #fff; outline: none; 
-            color-scheme: dark;
+            color-scheme: dark; /* Icono del calendario blanco */
         }
         .btn { padding: 8px 20px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 600; transition: 0.3s; border: none; cursor: pointer; display: inline-block; }
         .btn-blue { background: var(--primary); color: white; }
-        .btn-blue:hover { background: #0b8acb; }
+        .btn-blue:hover { background: #2980b9; }
         .btn-red { background: #e74c3c; color: white; margin-left: 10px; }
         .btn-red:hover { background: #c0392b; }
 
@@ -193,12 +165,15 @@ else {
         .card h3 { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .card .valor { font-size: 32px; font-weight: 700; color: var(--text-main); }
 
-        /* Gráficas y Tablas */
+        /* Gráficas */
         .contenedor-graficas { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
         .box-white {
             background: var(--bg-panel); border-radius: 15px; padding: 20px;
-            border: 1px solid var(--border); height: 400px;
+            border: 1px solid var(--border);
+            height: 400px;
         }
+
+        /* Tabla */
         .tabla-container { 
             background: var(--bg-panel); padding: 25px; border-radius: 15px; 
             border: 1px solid var(--border); margin-bottom: 40px; 
@@ -208,9 +183,11 @@ else {
         td { padding: 15px 0; border-bottom: 1px solid #333; font-size: 15px; color: #ddd; }
         .precio-row { font-weight: 700; color: var(--accent); }
 
+        /* Responsive */
         @media (max-width: 900px) {
-            .barra-azul { justify-content: center; }
-            .panel-datos { padding: 20px; }
+            .contenedor-reporte { flex-direction: column; }
+            .panel-imagen { width: 100%; height: 200px; position: static; background-attachment: scroll; }
+            .panel-datos { width: 100%; padding: 20px; }
             .grid-kpis, .contenedor-graficas { grid-template-columns: 1fr; }
             .box-white { height: 300px; }
         }
@@ -218,131 +195,117 @@ else {
 </head>
 <body>
 
-    <?php 
-        // Incluimos barra.php que contiene el nombre de usuario y botón cerrar sesión
-        $ruta_barra = __DIR__ . '/../templates/barra.php';
-        if(file_exists($ruta_barra)) {
-            include_once $ruta_barra;
-        }
-    ?>
+<div class="contenedor-reporte">
 
-    <div class="barra-azul">
-        <a href="/admin">Ver Citas</a>
-        <a href="/servicios">Ver Servicios</a>
-        <a href="/servicios/crear">Nuevo Servicio</a>
-        <a href="/admin/reportes">Ver Reportes</a>
-    </div>
+    <div class="panel-datos">
+        
+        <div class="filtro-box">
+            <form method="GET" style="display:flex; align-items:center; gap:10px;">
+                <label>📅 Filtrar por fecha:</label>
+                <input type="date" name="fecha" value="<?php echo $fecha_seleccionada; ?>">
+                <button type="submit" class="btn btn-blue">Buscar</button>
+            </form>
+            <?php if($modo_dia): ?>
+                <a href="reportes.php" class="btn btn-red">Ver Todo</a>
+            <?php endif; ?>
+        </div>
 
-    <div class="contenedor-reporte">
-        <div class="panel-datos">
+        <h2><?php echo $titulo; ?></h2>
+
+        <div class="grid-kpis">
+            <div class="card">
+                <h3>Ingresos</h3>
+                <div class="valor" style="color: var(--accent);">$ <?php echo number_format($total_ingresos, 0); ?></div>
+            </div>
+            <div class="card">
+                <h3>Citas</h3>
+                <div class="valor" style="color: var(--primary);"><?php echo $total_citas; ?></div>
+            </div>
+            <div class="card">
+                <h3>Top Servicio</h3>
+                <div class="valor" style="font-size: 20px;"><?php echo $modo_dia ? '(Ver tabla)' : $top_servicio; ?></div>
+            </div>
+        </div>
+
+        <?php if($modo_dia): ?>
             
-            <div class="filtro-box">
-                <form method="GET" style="display:flex; align-items:center; gap:10px;">
-                    <label>📅 Filtrar por fecha:</label>
-                    <input type="date" name="fecha" value="<?php echo $fecha_seleccionada; ?>">
-                    <button type="submit" class="btn btn-blue">Buscar</button>
-                </form>
-
-                <?php if($modo_dia): ?>
-                    <a href="/admin/reportes" class="btn btn-red">Ver Todo</a>
+            <div class="tabla-container">
+                <h3 style="margin-bottom:20px; color:#ddd;">Detalle de Citas</h3>
+                <?php if(mysqli_num_rows($lista_citas_dia) > 0): ?>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Cliente</th>
+                                <th>Servicios</th>
+                                <th>Cobro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($cita = mysqli_fetch_assoc($lista_citas_dia)): ?>
+                                <tr>
+                                    <td><strong style="color: var(--primary);"><?php echo $cita['hora']; ?></strong></td>
+                                    <td><?php echo $cita['cliente']; ?></td>
+                                    <td style="color:#888; font-size:13px;"><?php echo $cita['servicios']; ?></td>
+                                    <td class="precio-row">$ <?php echo number_format($cita['total_cita'], 0); ?></td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <p style="text-align:center; padding:30px; color:#666;">No hay citas registradas para este día.</p>
                 <?php endif; ?>
             </div>
 
-            <h2><?php echo $titulo; ?></h2>
+        <?php else: ?>
 
-            <div class="grid-kpis">
-                <div class="card">
-                    <h3>Ingresos</h3>
-                    <div class="valor" style="color: var(--accent);">$ <?php echo number_format($total_ingresos, 0); ?></div>
+            <div class="contenedor-graficas">
+                <div class="box-white">
+                    <canvas id="chartLine"></canvas>
                 </div>
-                <div class="card">
-                    <h3>Citas</h3>
-                    <div class="valor" style="color: var(--primary);"><?php echo $total_citas; ?></div>
-                </div>
-                <div class="card">
-                    <h3>Top Servicio</h3>
-                    <div class="valor" style="font-size: 20px;"><?php echo $modo_dia ? '(Ver tabla)' : $top_servicio; ?></div>
+                <div class="box-white">
+                    <canvas id="chartDona"></canvas>
                 </div>
             </div>
 
-            <?php if($modo_dia): ?>
-                
-                <div class="tabla-container">
-                    <h3 style="margin-bottom:20px; color:#ddd;">Detalle de Citas</h3>
-                    <?php if(mysqli_num_rows($lista_citas_dia) > 0): ?>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Hora</th>
-                                    <th>Cliente</th>
-                                    <th>Servicios</th>
-                                    <th>Cobro</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php while($cita = mysqli_fetch_assoc($lista_citas_dia)): ?>
-                                    <tr>
-                                        <td><strong style="color: var(--primary);"><?php echo $cita['hora']; ?></strong></td>
-                                        <td><?php echo $cita['cliente']; ?></td>
-                                        <td style="color:#888; font-size:13px;"><?php echo $cita['servicios']; ?></td>
-                                        <td class="precio-row">$ <?php echo number_format($cita['total_cita'], 0); ?></td>
-                                    </tr>
-                                <?php endwhile; ?>
-                            </tbody>
-                        </table>
-                    <?php else: ?>
-                        <p style="text-align:center; padding:30px; color:#666;">No hay citas registradas para este día.</p>
-                    <?php endif; ?>
-                </div>
+            <script>
+                // Configuración Dark Mode ChartJS
+                Chart.defaults.color = '#bbbbbb';
+                Chart.defaults.borderColor = '#333333';
+                Chart.defaults.font.family = 'Poppins';
 
-            <?php else: ?>
+                new Chart(document.getElementById('chartLine'), {
+                    type: 'line',
+                    data: {
+                        labels: <?php echo json_encode($fechas); ?>,
+                        datasets: [{
+                            label: 'Ingresos',
+                            data: <?php echo json_encode($ingresos_data); ?>,
+                            borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#fff'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} } }
+                });
 
-                <div class="contenedor-graficas">
-                    <div class="box-white">
-                        <canvas id="chartLine"></canvas>
-                    </div>
-                    <div class="box-white">
-                        <canvas id="chartDona"></canvas>
-                    </div>
-                </div>
+                new Chart(document.getElementById('chartDona'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: <?php echo json_encode($serv_nombres); ?>,
+                        datasets: [{
+                            data: <?php echo json_encode($serv_cant); ?>,
+                            backgroundColor: ['#3498db', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: {position:'right', labels:{color:'#fff'}} } }
+                });
+            </script>
 
-                <script>
-                    Chart.defaults.color = '#bbbbbb';
-                    Chart.defaults.borderColor = '#333333';
-                    Chart.defaults.font.family = 'Poppins';
+        <?php endif; ?>
 
-                    new Chart(document.getElementById('chartLine'), {
-                        type: 'line',
-                        data: {
-                            labels: <?php echo json_encode($fechas); ?>,
-                            datasets: [{
-                                label: 'Ingresos',
-                                data: <?php echo json_encode($ingresos_data); ?>,
-                                borderColor: '#0da6f3', backgroundColor: 'rgba(13, 166, 243, 0.2)',
-                                fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#fff'
-                            }]
-                        },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} } }
-                    });
-
-                    new Chart(document.getElementById('chartDona'), {
-                        type: 'doughnut',
-                        data: {
-                            labels: <?php echo json_encode($serv_nombres); ?>,
-                            datasets: [{
-                                data: <?php echo json_encode($serv_cant); ?>,
-                                backgroundColor: ['#0da6f3', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6'],
-                                borderWidth: 0
-                            }]
-                        },
-                        options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: {position:'right', labels:{color:'#fff'}} } }
-                    });
-                </script>
-
-            <?php endif; ?>
-
-        </div>
     </div>
+</div>
 
 </body>
 </html>
