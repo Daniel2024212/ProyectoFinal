@@ -90,7 +90,7 @@ $top_servicio = $servicios_nombres[0] ?? 'Sin datos';
         }
 
         .card {
-            background: white;
+            background: black;
             border-radius: 20px; /* Bordes muy redondeados */
             padding: 25px 15px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
