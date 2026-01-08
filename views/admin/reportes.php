@@ -1,15 +1,28 @@
-<?php include_once __DIR__ . '/../templates/barra.php'; ?>
 <?php
-// --- 1. INICIAR SESIÓN Y CONEXIÓN ---
+// 1. INICIAR SESIÓN PRIMERO (Para que barra.php detecte al usuario)
 if(!isset($_SESSION)) {
     session_start();
 }
+// Definimos la variable $nombre antes de incluir la barra
+$nombre = $_SESSION['nombre'] ?? 'Usuario';
 
+// 2. INCLUIR LA BARRA (Mostrará el Hola + Nombre)
+include_once __DIR__ . '/../templates/barra.php'; 
+?>
+
+<div class="barra-azul">
+    <a href="/admin" class="boton">Ver Citas</a>
+    <a href="/servicios" class="boton">Ver Servicios</a>
+    <a href="/servicios/crear" class="boton">Nuevo Servicio</a>
+    <a href="/admin/reportes" class="boton">Ver Reportes</a>
+</div>
+
+<?php
+// --- 4. CONFIGURACIÓN Y CONEXIÓN BASE DE DATOS ---
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 global $db;
-// Conexión segura
 if (empty($db)) {
     $ruta_db = __DIR__ . '/../../includes/database.php';
     if (file_exists($ruta_db)) include_once $ruta_db;
@@ -18,46 +31,28 @@ if (empty($db)) {
     die("<div style='text-align:center; padding:20px; color:red;'>Error: No se pudo conectar a la base de datos.</div>");
 }
 
-// --- 2. LÓGICA DE FILTRADO ---
+// --- 5. LÓGICA DE FILTRADO (Igual que antes) ---
 $fecha_seleccionada = $_GET['fecha'] ?? null;
 $modo_dia = !empty($fecha_seleccionada);
 
-// Variables por defecto
 $titulo = "Reporte General";
-$total_ingresos = 0;
-$total_citas = 0;
-$top_servicio = "N/A";
-$lista_citas_dia = null;
+$total_ingresos = 0; $total_citas = 0; $top_servicio = "N/A"; $lista_citas_dia = null;
 
-// --- CASO A: REPORTE POR DÍA ---
 if ($modo_dia) {
     $titulo = "Reporte del día: " . date("d/m/Y", strtotime($fecha_seleccionada));
     
-    // 1. Totales del día
-    $sql_dia = "SELECT COUNT(DISTINCT c.id) as cant, SUM(s.precio) as total 
-                FROM citas c 
-                LEFT JOIN citasServicios cs ON c.id = cs.citaId 
-                LEFT JOIN servicios s ON cs.servicioId = s.id 
-                WHERE c.fecha = '$fecha_seleccionada'";
+    // Totales Día
+    $sql_dia = "SELECT COUNT(DISTINCT c.id) as cant, SUM(s.precio) as total FROM citas c LEFT JOIN citasServicios cs ON c.id = cs.citaId LEFT JOIN servicios s ON cs.servicioId = s.id WHERE c.fecha = '$fecha_seleccionada'";
     $res_dia = mysqli_query($db, $sql_dia);
     $data_dia = mysqli_fetch_assoc($res_dia);
     $total_ingresos = $data_dia['total'] ?? 0;
     $total_citas = $data_dia['cant'] ?? 0;
 
-    // 2. Tabla detallada
-    $sql_lista = "SELECT TIME_FORMAT(c.hora, '%H:%i') as hora, CONCAT(u.nombre, ' ', u.apellido) as cliente, 
-                  GROUP_CONCAT(s.nombre SEPARATOR ', ') as servicios, SUM(s.precio) as total_cita 
-                  FROM citas c 
-                  JOIN usuarios u ON c.usuarioId = u.id 
-                  LEFT JOIN citasServicios cs ON c.id = cs.citaId 
-                  LEFT JOIN servicios s ON cs.servicioId = s.id 
-                  WHERE c.fecha = '$fecha_seleccionada' 
-                  GROUP BY c.id ORDER BY c.hora ASC";
+    // Tabla Día
+    $sql_lista = "SELECT TIME_FORMAT(c.hora, '%H:%i') as hora, CONCAT(u.nombre, ' ', u.apellido) as cliente, GROUP_CONCAT(s.nombre SEPARATOR ', ') as servicios, SUM(s.precio) as total_cita FROM citas c JOIN usuarios u ON c.usuarioId = u.id LEFT JOIN citasServicios cs ON c.id = cs.citaId LEFT JOIN servicios s ON cs.servicioId = s.id WHERE c.fecha = '$fecha_seleccionada' GROUP BY c.id ORDER BY c.hora ASC";
     $lista_citas_dia = mysqli_query($db, $sql_lista);
-} 
-// --- CASO B: REPORTE GENERAL ---
-else {
-    // 1. Totales Históricos
+} else {
+    // Totales Generales
     $sql_hist = "SELECT SUM(s.precio) as total FROM citas c JOIN citasServicios cs ON c.id = cs.citaId JOIN servicios s ON cs.servicioId = s.id";
     $res_hist = mysqli_query($db, $sql_hist);
     $total_ingresos = mysqli_fetch_assoc($res_hist)['total'] ?? 0;
@@ -66,23 +61,16 @@ else {
     $res_count = mysqli_query($db, $sql_count);
     $total_citas = mysqli_fetch_assoc($res_count)['cant'] ?? 0;
 
-    // 2. Gráfica Línea
+    // Gráficas
     $sql_g1 = "SELECT c.fecha, SUM(s.precio) as total FROM citas c JOIN citasServicios cs ON c.id = cs.citaId JOIN servicios s ON cs.servicioId = s.id GROUP BY c.fecha ORDER BY c.fecha ASC";
     $res_g1 = mysqli_query($db, $sql_g1);
     $fechas = []; $ingresos_data = [];
-    while($r = mysqli_fetch_assoc($res_g1)) {
-        $fechas[] = date('d-M', strtotime($r['fecha']));
-        $ingresos_data[] = $r['total'];
-    }
+    while($r = mysqli_fetch_assoc($res_g1)) { $fechas[] = date('d-M', strtotime($r['fecha'])); $ingresos_data[] = $r['total']; }
 
-    // 3. Gráfica Dona
     $sql_g2 = "SELECT s.nombre, COUNT(cs.id) as cant FROM servicios s JOIN citasServicios cs ON s.id = cs.servicioId GROUP BY s.nombre ORDER BY cant DESC LIMIT 5";
     $res_g2 = mysqli_query($db, $sql_g2);
     $serv_nombres = []; $serv_cant = [];
-    while($r = mysqli_fetch_assoc($res_g2)) {
-        $serv_nombres[] = $r['nombre'];
-        $serv_cant[] = $r['cant'];
-    }
+    while($r = mysqli_fetch_assoc($res_g2)) { $serv_nombres[] = $r['nombre']; $serv_cant[] = $r['cant']; }
     $top_servicio = $serv_nombres[0] ?? "N/A";
 }
 ?>
@@ -119,6 +107,26 @@ else {
             flex-direction: column;
         }
 
+        /* ESTILOS PARA LA BARRA DE BOTONES (Restaurados) */
+        .barra-azul {
+            background-color: var(--primary);
+            padding: 15px 40px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            /* Si quieres centrado usa center, si a la izquierda usa flex-start */
+            justify-content: flex-start; 
+        }
+        .barra-azul .boton {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+        .barra-azul .boton:hover { color: #000; }
+
         /* Contenedor principal */
         .contenedor-reporte {
             display: flex;
@@ -126,7 +134,6 @@ else {
             width: 100%;
             flex: 1;
             align-items: center;
-            justify-content: center; /* Centrar verticalmente si hay poco contenido */
         }
 
         .panel-datos {
@@ -189,6 +196,7 @@ else {
         .precio-row { font-weight: 700; color: var(--accent); }
 
         @media (max-width: 900px) {
+            .barra-azul { justify-content: center; }
             .panel-datos { padding: 20px; }
             .grid-kpis, .contenedor-graficas { grid-template-columns: 1fr; }
             .box-white { height: 300px; }
