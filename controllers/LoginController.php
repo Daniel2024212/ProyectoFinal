@@ -399,7 +399,73 @@ class LoginController {
         ]);
     }
 
-    // --- 3. FUNCIÓN: CREAR ADMIN (Con mensaje de éxito) ---
+    <?php
+
+namespace Controllers;
+
+// --- IMPORTANTE: ESTAS LÍNEAS SON VITALES ---
+// Sin ellas, sale Error 500 porque no encuentra las clases
+use MVC\Router;
+use Model\Usuario;
+
+class LoginController {
+
+    // 1. INICIAR SESIÓN
+    public static function login(Router $router) {
+        $alertas = [];
+
+        if($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $auth = new Usuario($_POST);
+            $alertas = $auth->validarLogin();
+
+            if(empty($alertas)) {
+                // Verificar si el usuario existe
+                $usuario = Usuario::where('email', $auth->email);
+
+                if($usuario) {
+                    // Verificar el password
+                    if( $usuario->comprobarPasswordAndVerificado($auth->password) ) {
+                        // Autenticar al usuario
+                        if(!isset($_SESSION)) {
+                            session_start();
+                        }
+
+                        $_SESSION['id'] = $usuario->id;
+                        $_SESSION['nombre'] = $usuario->nombre . " " . $usuario->apellido;
+                        $_SESSION['email'] = $usuario->email;
+                        $_SESSION['login'] = true;
+
+                        // Redireccionamiento según rol
+                        if($usuario->admin === "1") {
+                            $_SESSION['admin'] = $usuario->admin ?? null;
+                            header('Location: /admin');
+                        } else {
+                            header('Location: /cita');
+                        }
+                    }
+                } else {
+                    Usuario::setAlerta('error', 'Usuario no encontrado');
+                }
+            }
+        }
+
+        $alertas = Usuario::getAlertas();
+        
+        $router->render('auth/login', [
+            'alertas' => $alertas
+        ]);
+    }
+
+    // 2. CERRAR SESIÓN
+    public static function logout() {
+        if(!isset($_SESSION)) {
+            session_start();
+        }
+        $_SESSION = [];
+        header('Location: /');
+    }
+
+    // 3. CREAR ADMIN (La función nueva)
     public static function crearAdmin(Router $router) {
         $alertas = [];
         $usuario = new Usuario; 
@@ -414,27 +480,30 @@ class LoginController {
                 if ($resultado->num_rows) {
                     $alertas = Usuario::getAlertas();
                 } else {
-                    // Hashear password y configurar rol
+                    // Hashear password
                     $usuario->hashPassword();
+
+                    // FORZAR ROLES DE ADMINISTRADOR
                     $usuario->admin = "1";
                     $usuario->confirmado = "1";
                     $usuario->token = "";
 
-                    // Guardar
+                    // Guardar en Base de Datos
                     $resultado = $usuario->guardar();
 
                     if ($resultado) {
-                        // AQUÍ EL CAMBIO: No redireccionamos, mostramos éxito
+                        // Muestra mensaje de éxito en lugar de redireccionar
                         Usuario::setAlerta('exito', 'Administrador Creado Correctamente');
                         $alertas = Usuario::getAlertas();
                         
-                        // Reiniciamos la variable usuario para vaciar los campos del formulario
+                        // Limpiamos la variable usuario para vaciar el formulario
                         $usuario = new Usuario; 
                     }
                 }
             }
         }
 
+        // Renderizar la vista
         $router->render('auth/crear_admin', [
             'usuario' => $usuario,
             'alertas' => $alertas
