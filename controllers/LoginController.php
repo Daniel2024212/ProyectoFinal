@@ -399,7 +399,7 @@ class LoginController {
         ]);
     }
 
-    // --- 3. NUEVA FUNCIÓN: CREAR ADMIN ---
+    // --- 3. FUNCIÓN: CREAR ADMIN (Con mensaje de éxito) ---
     public static function crearAdmin(Router $router) {
         $alertas = [];
         $usuario = new Usuario; 
@@ -414,10 +414,8 @@ class LoginController {
                 if ($resultado->num_rows) {
                     $alertas = Usuario::getAlertas();
                 } else {
-                    // Hashear password
+                    // Hashear password y configurar rol
                     $usuario->hashPassword();
-
-                    // FORZAR ROLES DE ADMINISTRADOR
                     $usuario->admin = "1";
                     $usuario->confirmado = "1";
                     $usuario->token = "";
@@ -426,7 +424,12 @@ class LoginController {
                     $resultado = $usuario->guardar();
 
                     if ($resultado) {
-                        header('Location: /login');
+                        // AQUÍ EL CAMBIO: No redireccionamos, mostramos éxito
+                        Usuario::setAlerta('exito', 'Administrador Creado Correctamente');
+                        $alertas = Usuario::getAlertas();
+                        
+                        // Reiniciamos la variable usuario para vaciar los campos del formulario
+                        $usuario = new Usuario; 
                     }
                 }
             }
