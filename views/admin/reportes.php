@@ -4,8 +4,8 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 global $db;
-// Conexión segura
 if (empty($db)) {
+    // Ajusta esta ruta si es necesario para llegar a includes/database.php
     $ruta_db = __DIR__ . '/../../includes/database.php';
     if (file_exists($ruta_db)) include_once $ruta_db;
 }
@@ -98,7 +98,7 @@ else {
             --bg-panel: #1a1a1a;
             --text-main: #ffffff;
             --text-light: #a0a0a0;
-            --primary: #3498db;
+            --primary: #0da6f3; /* Azul brillante como en tu imagen */
             --accent: #2ecc71;
             --border: #333333;
         }
@@ -114,28 +114,44 @@ else {
             flex-direction: column;
         }
 
-        /* Estilo para ajustar la barra incluida */
-        .barra-nav {
-            width: 100%;
-            z-index: 1000;
+        /* ESTILOS PARA LA BARRA DE NAVEGACIÓN AZUL */
+        .barra-azul {
+            background-color: var(--primary);
+            padding: 15px 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-start; /* Alineado a la izquierda como la imagen */
+        }
+        
+        .barra-azul a {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .barra-azul a:hover {
+            color: #000;
         }
 
-        /* Contenedor principal */
+        /* Estilos generales del contenedor */
         .contenedor-reporte {
             display: flex;
             flex-direction: column;
             width: 100%;
-            flex: 1; /* Ocupa el espacio restante bajo la barra */
             align-items: center;
+            flex: 1;
         }
 
-        /* DERECHA: Datos */
         .panel-datos {
             width: 100%;
-            max-width: 1400px;
+            max-width: 1200px;
             padding: 40px;
             background-color: var(--bg-body);
-            height: auto; 
         }
 
         h2 { font-weight: 700; margin-bottom: 25px; color: var(--text-main); font-size: 28px; }
@@ -160,7 +176,7 @@ else {
         }
         .btn { padding: 8px 20px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 600; transition: 0.3s; border: none; cursor: pointer; display: inline-block; }
         .btn-blue { background: var(--primary); color: white; }
-        .btn-blue:hover { background: #2980b9; }
+        .btn-blue:hover { background: #0b8acb; }
         .btn-red { background: #e74c3c; color: white; margin-left: 10px; }
         .btn-red:hover { background: #c0392b; }
 
@@ -175,15 +191,12 @@ else {
         .card h3 { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .card .valor { font-size: 32px; font-weight: 700; color: var(--text-main); }
 
-        /* Gráficas */
+        /* Gráficas y Tablas */
         .contenedor-graficas { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
         .box-white {
             background: var(--bg-panel); border-radius: 15px; padding: 20px;
-            border: 1px solid var(--border);
-            height: 400px;
+            border: 1px solid var(--border); height: 400px;
         }
-
-        /* Tabla */
         .tabla-container { 
             background: var(--bg-panel); padding: 25px; border-radius: 15px; 
             border: 1px solid var(--border); margin-bottom: 40px; 
@@ -194,6 +207,7 @@ else {
         .precio-row { font-weight: 700; color: var(--accent); }
 
         @media (max-width: 900px) {
+            .barra-azul { justify-content: center; }
             .panel-datos { padding: 20px; }
             .grid-kpis, .contenedor-graficas { grid-template-columns: 1fr; }
             .box-white { height: 300px; }
@@ -202,16 +216,19 @@ else {
 </head>
 <body>
 
-    <div class="barra-nav">
-        <?php 
-            // Buscamos la barra en la carpeta templates (subiendo un nivel desde admin)
-            $ruta_barra = __DIR__ . '/../templates/barra.php';
-            if(file_exists($ruta_barra)) {
-                include_once $ruta_barra;
-            } else {
-                echo "<p style='color:white; text-align:center;'>Barra no encontrada en: $ruta_barra</p>";
-            }
-        ?>
+    <?php 
+        // Incluimos barra.php que contiene el nombre de usuario y botón cerrar sesión
+        $ruta_barra = __DIR__ . '/../templates/barra.php';
+        if(file_exists($ruta_barra)) {
+            include_once $ruta_barra;
+        }
+    ?>
+
+    <div class="barra-azul">
+        <a href="/admin">Ver Citas</a>
+        <a href="/servicios">Ver Servicios</a>
+        <a href="/servicios/crear">Nuevo Servicio</a>
+        <a href="/admin/reportes">Ver Reportes</a>
     </div>
 
     <div class="contenedor-reporte">
@@ -299,7 +316,7 @@ else {
                             datasets: [{
                                 label: 'Ingresos',
                                 data: <?php echo json_encode($ingresos_data); ?>,
-                                borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                                borderColor: '#0da6f3', backgroundColor: 'rgba(13, 166, 243, 0.2)',
                                 fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#fff'
                             }]
                         },
@@ -312,7 +329,7 @@ else {
                             labels: <?php echo json_encode($serv_nombres); ?>,
                             datasets: [{
                                 data: <?php echo json_encode($serv_cant); ?>,
-                                backgroundColor: ['#3498db', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6'],
+                                backgroundColor: ['#0da6f3', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6'],
                                 borderWidth: 0
                             }]
                         },
