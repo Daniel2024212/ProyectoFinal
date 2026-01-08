@@ -157,7 +157,12 @@ else {
             background: #222; color: #fff; outline: none; 
             color-scheme: dark;
         }
-        
+        .btn { padding: 8px 20px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 600; transition: 0.3s; border: none; cursor: pointer; display: inline-block; }
+        .btn-blue { background: var(--primary); color: white; }
+        .btn-blue:hover { background: #0b8acb; }
+        .btn-red { background: #e74c3c; color: white; margin-left: 10px; }
+        .btn-red:hover { background: #c0392b; }
+
         /* KPIs */
         .grid-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
         .card {
