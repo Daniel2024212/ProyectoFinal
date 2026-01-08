@@ -1,82 +1,83 @@
 <?php
-// --- 1. CONFIGURACIÓN Y CONEXIÓN (Robusta) ---
-ini_set('display_errors', 0); // Apagamos errores en producción para que se vea limpio
+// --- 1. CONFIGURACIÓN Y CONEXIÓN ---
+ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 global $db;
 if (empty($db)) {
     $ruta_db = __DIR__ . '/../../includes/database.php';
-    if (file_exists($ruta_db)) {
-        include_once $ruta_db;
+    if (file_exists($ruta_db)) include_once $ruta_db;
+}
+if (empty($db)) die("Error de conexión.");
+
+// --- 2. LÓGICA DE FILTRADO ---
+$fecha_seleccionada = $_GET['fecha'] ?? null; // ¿El usuario eligió una fecha?
+$modo_dia = !empty($fecha_seleccionada); // true si estamos viendo un día, false si es general
+
+// VARIABLES INICIALES
+$titulo = "Reporte Histórico General";
+$total_ingresos = 0;
+$total_citas = 0;
+$top_servicio = "N/A";
+$lista_citas_dia = null; // Solo se llenará si hay fecha seleccionada
+
+// --- CASO A: REPORTE POR DÍA ESPECÍFICO ---
+if ($modo_dia) {
+    $titulo = "Reporte del día: " . date("d-m-Y", strtotime($fecha_seleccionada));
+    
+    // 1. Totales del día
+    $sql_dia = "SELECT COUNT(DISTINCT c.id) as cant, SUM(s.precio) as total 
+                FROM citas c 
+                LEFT JOIN citasServicios cs ON c.id = cs.citaId 
+                LEFT JOIN servicios s ON cs.servicioId = s.id 
+                WHERE c.fecha = '$fecha_seleccionada'";
+    $res_dia = mysqli_query($db, $sql_dia);
+    $data_dia = mysqli_fetch_assoc($res_dia);
+    $total_ingresos = $data_dia['total'] ?? 0;
+    $total_citas = $data_dia['cant'] ?? 0;
+
+    // 2. Lista detallada (Tabla)
+    $sql_lista = "SELECT TIME_FORMAT(c.hora, '%H:%i') as hora, CONCAT(u.nombre, ' ', u.apellido) as cliente, 
+                  GROUP_CONCAT(s.nombre SEPARATOR ', ') as servicios, SUM(s.precio) as total_cita 
+                  FROM citas c 
+                  JOIN usuarios u ON c.usuarioId = u.id 
+                  LEFT JOIN citasServicios cs ON c.id = cs.citaId 
+                  LEFT JOIN servicios s ON cs.servicioId = s.id 
+                  WHERE c.fecha = '$fecha_seleccionada' 
+                  GROUP BY c.id ORDER BY c.hora ASC";
+    $lista_citas_dia = mysqli_query($db, $sql_lista);
+} 
+
+// --- CASO B: REPORTE GENERAL (HISTÓRICO) ---
+else {
+    // 1. Totales Históricos
+    $sql_hist = "SELECT SUM(s.precio) as total FROM citas c JOIN citasServicios cs ON c.id = cs.citaId JOIN servicios s ON cs.servicioId = s.id";
+    $res_hist = mysqli_query($db, $sql_hist);
+    $total_ingresos = mysqli_fetch_assoc($res_hist)['total'] ?? 0;
+
+    $sql_count = "SELECT COUNT(DISTINCT id) as cant FROM citas";
+    $res_count = mysqli_query($db, $sql_count);
+    $total_citas = mysqli_fetch_assoc($res_count)['cant'] ?? 0;
+
+    // 2. Datos para Gráfica de Línea
+    $sql_g1 = "SELECT c.fecha, SUM(s.precio) as total FROM citas c JOIN citasServicios cs ON c.id = cs.citaId JOIN servicios s ON cs.servicioId = s.id GROUP BY c.fecha ORDER BY c.fecha ASC";
+    $res_g1 = mysqli_query($db, $sql_g1);
+    $fechas = []; $ingresos_data = [];
+    while($r = mysqli_fetch_assoc($res_g1)) {
+        $fechas[] = date('d-M', strtotime($r['fecha']));
+        $ingresos_data[] = $r['total'];
     }
+
+    // 3. Datos para Gráfica Top Servicios
+    $sql_g2 = "SELECT s.nombre, COUNT(cs.id) as cant FROM servicios s JOIN citasServicios cs ON s.id = cs.servicioId GROUP BY s.nombre ORDER BY cant DESC LIMIT 5";
+    $res_g2 = mysqli_query($db, $sql_g2);
+    $serv_nombres = []; $serv_cant = [];
+    while($r = mysqli_fetch_assoc($res_g2)) {
+        $serv_nombres[] = $r['nombre'];
+        $serv_cant[] = $r['cant'];
+    }
+    $top_servicio = $serv_nombres[0] ?? "N/A";
 }
-if (empty($db)) { die("Error Crítico: No hay conexión a la base de datos."); }
-
-// --- 2. LÓGICA DE DATOS "POR DÍA" (LO NUEVO) ---
-$hoy = date('Y-m-d');
-
-// A) Totales de HOY (KPIs)
-$sql_hoy_totales = "
-    SELECT 
-        COUNT(DISTINCT c.id) as citas_hoy, 
-        SUM(s.precio) as ventas_hoy
-    FROM citas c
-    LEFT JOIN citasServicios cs ON c.id = cs.citaId
-    LEFT JOIN servicios s ON cs.servicioId = s.id
-    WHERE c.fecha = '$hoy'";
-
-$resultado_hoy = mysqli_query($db, $sql_hoy_totales);
-$datos_hoy = mysqli_fetch_assoc($resultado_hoy);
-
-$ventas_hoy = $datos_hoy['ventas_hoy'] ?? 0;
-$citas_hoy = $datos_hoy['citas_hoy'] ?? 0;
-
-// B) Lista detallada de citas de HOY (Para la tabla)
-$sql_lista_hoy = "
-    SELECT 
-        TIME_FORMAT(c.hora, '%H:%i') as hora_fmt,
-        CONCAT(u.nombre, ' ', u.apellido) as cliente,
-        GROUP_CONCAT(s.nombre SEPARATOR ', ') as servicios_lista,
-        SUM(s.precio) as total_cita
-    FROM citas c
-    INNER JOIN usuarios u ON c.usuarioId = u.id
-    LEFT JOIN citasServicios cs ON c.id = cs.citaId
-    LEFT JOIN servicios s ON cs.servicioId = s.id
-    WHERE c.fecha = '$hoy'
-    GROUP BY c.id
-    ORDER BY c.hora ASC";
-$resultado_lista_hoy = mysqli_query($db, $sql_lista_hoy);
-
-
-// --- 3. LÓGICA DE DATOS HISTÓRICOS (PARA GRÁFICAS) ---
-
-// C) Histórico de Ingresos (Gráfica Línea)
-$sql_historico = "
-    SELECT c.fecha, SUM(s.precio) as total
-    FROM citas c
-    JOIN citasServicios cs ON c.id = cs.citaId
-    JOIN servicios s ON cs.servicioId = s.id
-    GROUP BY c.fecha ORDER BY c.fecha ASC";
-$res_hist = mysqli_query($db, $sql_historico);
-$fechas = []; $ingresos_hist = [];
-while($row = mysqli_fetch_assoc($res_hist)) {
-    $fecha_obj = date_create($row['fecha']);
-    $fechas[] = date_format($fecha_obj, 'd-M');
-    $ingresos_hist[] = $row['total'];
-}
-
-// D) Top Servicios Histórico (Gráfica Dona)
-$sql_top = "
-    SELECT s.nombre, COUNT(cs.id) as cant
-    FROM servicios s JOIN citasServicios cs ON s.id = cs.servicioId
-    GROUP BY s.nombre ORDER BY cant DESC LIMIT 5";
-$res_top = mysqli_query($db, $sql_top);
-$serv_nombres = []; $serv_cant = [];
-while($row = mysqli_fetch_assoc($res_top)) {
-    $serv_nombres[] = $row['nombre'];
-    $serv_cant[] = $row['cant'];
-}
-$top_servicio_nombre = $serv_nombres[0] ?? 'N/A';
 ?>
 
 <!DOCTYPE html>
@@ -84,200 +85,221 @@ $top_servicio_nombre = $serv_nombres[0] ?? 'N/A';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Diario</title>
+    <title>Panel de Reportes</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root {
-            --bg-main: #121212; /* Fondo principal total */
-            --card-bg: #1e1e1e; /* Color de las tarjetas */
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0a0;
-            --accent-blue: #3498db;
+            --bg-main: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #fff;
+            --accent: #3498db;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-main);
-            color: var(--text-primary);
+            color: var(--text-main);
             height: 100vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-        
-        /* Estructura principal */
         .contenedor-reporte { display: flex; flex: 1; overflow: hidden; }
         
-        /* Panel Izquierdo (Imagen) */
+        /* Panel Izquierdo */
         .panel-imagen {
             width: 35%;
-            background-image: url('../../build/img/barber-bg.jpg'); 
+            background-image: url('../../build/img/barber-bg.jpg');
             background-size: cover; background-position: center;
             position: relative;
         }
-        .panel-imagen::after { content: ''; position: absolute; inset:0; background: rgba(0,0,0,0.5); }
+        .panel-imagen::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.6); }
 
-        /* Panel Derecho (Datos) - SIN FONDO NEGRO PESADO */
+        /* Panel Derecho */
         .panel-datos {
             width: 65%;
             padding: 30px;
             overflow-y: auto;
-            background: transparent; /* quitamos el fondo sólido */
+            background: transparent; /* Fondo transparente solicitado */
         }
 
-        h2.titulo-seccion { font-weight: 800; margin-bottom: 20px; font-size: 24px; }
+        /* Formulario de Filtro */
+        .filtro-container {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .filtro-container input[type="date"] {
+            padding: 10px; border-radius: 8px; border: none; outline: none;
+            background: #333; color: white; font-family: 'Poppins', sans-serif;
+        }
+        .btn {
+            padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer;
+            font-weight: 600; transition: 0.3s; text-decoration: none; display: inline-block; font-size: 14px;
+        }
+        .btn-buscar { background: var(--accent); color: white; }
+        .btn-buscar:hover { background: #2980b9; }
+        .btn-reset { background: #e74c3c; color: white; }
+        
+        h2 { margin-bottom: 20px; font-weight: 800; }
 
-        /* KPIs (Tarjetas Superiores) */
+        /* Tarjetas KPIs */
         .grid-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
-        .card-kpi {
+        .card {
             background: var(--card-bg);
-            border-radius: 16px; padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            padding: 20px; border-radius: 16px; text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .card-kpi h3 { color: var(--text-secondary); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-        .card-kpi .valor { font-size: 32px; font-weight: 800; color: var(--accent-blue); }
-        .valor.texto { font-size: 20px; color: #fff; line-height: 1.2; }
+        .card span { font-size: 12px; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .card .val { font-size: 28px; font-weight: 800; margin-top: 5px; color: #fff; }
 
-        /* Gráficas */
-        .grid-graficas { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; height: 300px; margin-bottom: 30px; }
-        .chart-box {
+        /* Tablas y Gráficas */
+        .content-box {
             background: var(--card-bg);
-            border-radius: 16px; padding: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            position: relative;
+            padding: 20px; border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
         }
+        
+        /* Estilos Tabla */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; color: #aaa; padding-bottom: 10px; border-bottom: 1px solid #333; font-size: 13px; }
+        td { padding: 15px 0; border-bottom: 1px solid #333; font-size: 14px; }
 
-        /* Nueva Tabla de Citas de Hoy */
-        .tabla-container {
-            background: var(--card-bg);
-            border-radius: 16px; padding: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        .tabla-hoy { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .tabla-hoy th { text-align: left; color: var(--text-secondary); font-size: 13px; text-transform: uppercase; padding-bottom: 10px; border-bottom: 1px solid #333; }
-        .tabla-hoy td { padding: 15px 0; border-bottom: 1px solid #2a2a2a; font-size: 15px; }
-        .tabla-hoy .precio { font-weight: 700; color: var(--accent-blue); }
-        .sin-citas { color: var(--text-secondary); font-style: italic; padding: 20px 0; text-align: center;}
+        /* Estilos Gráficas */
+        .grid-charts { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; height: 300px; }
 
-        @media (max-width: 1024px) {
-            body { overflow: auto; }
+        @media (max-width: 900px) {
             .contenedor-reporte { flex-direction: column; }
-            .panel-imagen { width: 100%; height: 250px; }
+            .panel-imagen { width: 100%; height: 200px; }
             .panel-datos { width: 100%; }
-            .grid-kpis { grid-template-columns: 1fr; }
-            .grid-graficas { grid-template-columns: 1fr; height: auto; }
-            .chart-box { height: 300px; }
+            .grid-kpis, .grid-charts { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <div class="contenedor-reporte">
-        <div class="panel-imagen"></div>
+<div class="contenedor-reporte">
+    <div class="panel-imagen"></div>
+    
+    <div class="panel-datos">
         
-        <div class="panel-datos">
-            <h2 class="titulo-seccion">Resumen del Día (<?php echo date('d-m-Y'); ?>)</h2>
+        <div class="filtro-container">
+            <form method="GET" style="display:flex; gap:10px; align-items:center; width:100%;">
+                <label style="color:#aaa; font-size:14px;">Filtrar por día:</label>
+                <input type="date" name="fecha" value="<?php echo $fecha_seleccionada; ?>">
+                <button type="submit" class="btn btn-buscar">🔍 Buscar</button>
+                
+                <?php if($modo_dia): ?>
+                    <a href="reportes.php" class="btn btn-reset">❌ Ver General</a>
+                <?php endif; ?>
+            </form>
+        </div>
 
-            <div class="grid-kpis">
-                <div class="card-kpi">
-                    <h3>Ventas Hoy</h3>
-                    <div class="valor">$ <?php echo number_format($ventas_hoy, 0); ?></div>
-                </div>
-                <div class="card-kpi">
-                    <h3>Citas Hoy</h3>
-                    <div class="valor" style="color: #2ecc71;"><?php echo $citas_hoy; ?></div>
-                </div>
-                <div class="card-kpi">
-                    <h3>Top Histórico</h3>
-                    <div class="valor texto"><?php echo $top_servicio_nombre; ?></div>
+        <h2><?php echo $titulo; ?></h2>
+
+        <div class="grid-kpis">
+            <div class="card">
+                <span>Ingresos Totales</span>
+                <div class="val" style="color:#2ecc71">$ <?php echo number_format($total_ingresos, 0); ?></div>
+            </div>
+            <div class="card">
+                <span>Citas Atendidas</span>
+                <div class="val" style="color:#3498db"><?php echo $total_citas; ?></div>
+            </div>
+            <div class="card">
+                <span>Top Servicio</span>
+                <div class="val" style="font-size:18px;">
+                    <?php echo $modo_dia ? 'Ver tabla abajo' : $top_servicio; ?>
                 </div>
             </div>
+        </div>
 
-            <h2 class="titulo-seccion" style="font-size: 18px; color: var(--text-secondary);">Contexto Histórico</h2>
-            <div class="grid-graficas">
-                <div class="chart-box">
-                    <canvas id="chartLinea"></canvas>
-                </div>
-                <div class="chart-box">
-                    <canvas id="chartDona"></canvas>
-                </div>
-            </div>
-
-            <h2 class="titulo-seccion">Detalle de Citas de Hoy</h2>
-            <div class="tabla-container">
-                <?php if(mysqli_num_rows($resultado_lista_hoy) > 0): ?>
-                    <table class="tabla-hoy">
+        <?php if ($modo_dia): ?>
+            
+            <div class="content-box">
+                <h3 style="margin-bottom:15px;">Detalle de Citas</h3>
+                <?php if(mysqli_num_rows($lista_citas_dia) > 0): ?>
+                    <table>
                         <thead>
                             <tr>
                                 <th>Hora</th>
                                 <th>Cliente</th>
                                 <th>Servicios</th>
-                                <th>Total</th>
+                                <th>Cobro</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while($cita = mysqli_fetch_assoc($resultado_lista_hoy)): ?>
-                            <tr>
-                                <td style="font-weight:600;"><?php echo $cita['hora_fmt']; ?></td>
-                                <td><?php echo $cita['cliente']; ?></td>
-                                <td style="color: var(--text-secondary); font-size: 14px;"><?php echo $cita['servicios_lista']; ?></td>
-                                <td class="precio">$ <?php echo number_format($cita['total_cita'], 0); ?></td>
-                            </tr>
+                            <?php while($cita = mysqli_fetch_assoc($lista_citas_dia)): ?>
+                                <tr>
+                                    <td style="font-weight:bold; color:#3498db"><?php echo $cita['hora']; ?></td>
+                                    <td><?php echo $cita['cliente']; ?></td>
+                                    <td style="color:#aaa; font-size:12px;"><?php echo $cita['servicios']; ?></td>
+                                    <td style="font-weight:bold;">$ <?php echo number_format($cita['total_cita'], 0); ?></td>
+                                </tr>
                             <?php endwhile; ?>
                         </tbody>
                     </table>
                 <?php else: ?>
-                    <p class="sin-citas">No hay citas agendadas para hoy.</p>
+                    <p style="text-align:center; color:#aaa; padding:20px;">No hay citas registradas en esta fecha.</p>
                 <?php endif; ?>
             </div>
 
-        </div>
+        <?php else: ?>
+
+            <div class="grid-charts">
+                <div class="content-box" style="margin:0;">
+                    <canvas id="chartLine"></canvas>
+                </div>
+                <div class="content-box" style="margin:0;">
+                    <canvas id="chartDoughnut"></canvas>
+                </div>
+            </div>
+
+            <script>
+                // Solo cargamos gráficas en modo general
+                Chart.defaults.color = '#aaa';
+                Chart.defaults.borderColor = '#333';
+                
+                new Chart(document.getElementById('chartLine'), {
+                    type: 'line',
+                    data: {
+                        labels: <?php echo json_encode($fechas); ?>,
+                        datasets: [{
+                            label: 'Ingresos Históricos',
+                            data: <?php echo json_encode($ingresos_data); ?>,
+                            borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            fill: true, tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} } }
+                });
+
+                new Chart(document.getElementById('chartDoughnut'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: <?php echo json_encode($serv_nombres); ?>,
+                        datasets: [{
+                            data: <?php echo json_encode($serv_cant); ?>,
+                            backgroundColor: ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: {position:'right'} } }
+                });
+            </script>
+
+        <?php endif; ?>
+
     </div>
+</div>
 
-    <script>
-        // Configuración Dark Mode ChartJS
-        Chart.defaults.color = '#a0a0a0';
-        Chart.defaults.borderColor = '#2a2a2a';
-        Chart.defaults.font.family = 'Poppins';
-
-        // Gráfica Línea Histórica
-        new Chart(document.getElementById('chartLinea'), {
-            type: 'line',
-            data: {
-                labels: <?php echo json_encode($fechas); ?>,
-                datasets: [{
-                    label: 'Ingresos',
-                    data: <?php echo json_encode($ingresos_hist); ?>,
-                    borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                    borderWidth: 3, fill: true, tension: 0.4, pointRadius: 4
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: {display:false}, title: {display:true, text:'Tendencia de Ingresos', font:{size:16}} },
-                scales: { y: {beginAtZero:true, grid:{color:'#2a2a2a'}} }
-            }
-        });
-
-        // Gráfica Dona Top Servicios
-        new Chart(document.getElementById('chartDona'), {
-            type: 'doughnut',
-            data: {
-                labels: <?php echo json_encode($serv_nombres); ?>,
-                datasets: [{
-                    data: <?php echo json_encode($serv_cant); ?>,
-                    backgroundColor: ['#3498db', '#e74c3c', '#f1c40f', '#2ecc71', '#9b59b6'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, cutout: '70%',
-                plugins: { legend: {position:'right', labels:{boxWidth:12, color:'#fff'}} }
-            }
-        });
-    </script>
 </body>
 </html>
