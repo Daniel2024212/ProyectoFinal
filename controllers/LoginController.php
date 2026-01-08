@@ -232,47 +232,43 @@ class LoginController {
         ]);
     }
 
-    // 3. CREAR ADMIN (La función nueva)
-    public static function crearAdmin(Router $router) {
+   public static function crearAdmin(Router $router) {
         $alertas = [];
         $usuario = new Usuario; 
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $usuario->sincronizar($_POST);
             
-            // IMPORTANTE: Esta función debe existir en tu modelo Usuario.php
-            $alertas = $usuario->validar_Nueva_Cuenta();
+            // 1. Validar (snake_case)
+            $alertas = $usuario->validar_nueva_cuenta();
 
             if (empty($alertas)) {
-                $resultado = $usuario->exite_usuario();
+                
+                // 2. CORRECCIÓN AQUÍ: Usar existe_usuario (con guion bajo)
+                $resultado = $usuario->existe_usuario(); 
 
                 if ($resultado->num_rows) {
                     $alertas = Usuario::getAlertas();
                 } else {
-                    // Hashear password
+                    // 3. Hashear (snake_case)
                     $usuario->hash_password();
 
-                    // FORZAR ROLES DE ADMINISTRADOR Y CONFIRMADO
+                    // Forzar Admin
                     $usuario->admin = "1";
                     $usuario->confirmado = "1";
                     $usuario->token = "";
 
-                    // Guardar en Base de Datos
                     $resultado = $usuario->guardar();
 
                     if ($resultado) {
-                        // Muestra mensaje de éxito
                         Usuario::setAlerta('exito', 'Administrador Creado Correctamente');
                         $alertas = Usuario::getAlertas();
-                        
-                        // Limpiamos la variable usuario para vaciar el formulario
                         $usuario = new Usuario; 
                     }
                 }
             }
         }
 
-        // Renderizar la vista
         $router->render('auth/crear_admin', [
             'usuario' => $usuario,
             'alertas' => $alertas
