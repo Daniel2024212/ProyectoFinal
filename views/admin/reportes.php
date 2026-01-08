@@ -4,7 +4,7 @@
 if(!isset($_SESSION)) {
     session_start();
 }
-// Obtenemos el nombre del usuario logueado (o 'Usuario' si no hay sesión)
+// Obtenemos el nombre del usuario logueado
 $nombre = $_SESSION['nombre'] ?? 'Usuario';
 
 ini_set('display_errors', 0);
@@ -121,6 +121,34 @@ else {
             flex-direction: column;
         }
 
+        /* 1. ESTILOS BARRA SUPERIOR (Usuario) */
+        .barra-usuario {
+            background-color: #000;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #222;
+        }
+        .barra-usuario p {
+            margin: 0;
+            font-size: 16px;
+            color: white;
+            font-weight: 500;
+        }
+        .barra-usuario span {
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .btn-logout {
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+        .btn-logout:hover { color: #ddd; }
+
         /* Contenedor principal */
         .contenedor-reporte {
             display: flex;
@@ -190,6 +218,7 @@ else {
         .precio-row { font-weight: 700; color: var(--accent); }
 
         @media (max-width: 900px) {
+            .barra-usuario { justify-content: center; flex-direction: column; gap: 10px; text-align: center; }
             .panel-datos { padding: 20px; }
             .grid-kpis, .contenedor-graficas { grid-template-columns: 1fr; }
             .box-white { height: 300px; }
@@ -197,6 +226,11 @@ else {
     </style>
 </head>
 <body>
+
+    <div class="barra-usuario">
+        <p>Hola: <span><?php echo $nombre; ?></span></p>
+        <a href="/logout" class="btn-logout">Cerrar Sesión</a>
+    </div>
 
     <div class="contenedor-reporte">
         <div class="panel-datos">
