@@ -245,7 +245,7 @@ class LoginController {
             if (empty($alertas)) {
                 
                 // 2. CORRECCIÓN AQUÍ: Usar existe_usuario (con guion bajo)
-                $resultado = $usuario->existe_usuario(); 
+                $resultado = $usuario->exite_usuario(); 
 
                 if ($resultado->num_rows) {
                     $alertas = Usuario::getAlertas();
