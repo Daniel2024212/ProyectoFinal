@@ -1,3 +1,4 @@
+<?php include_once __DIR__ . '/../templates/barra.php'; ?>
 <?php
 // --- 1. INICIAR SESIÓN Y CONEXIÓN ---
 if(!isset($_SESSION)) {
