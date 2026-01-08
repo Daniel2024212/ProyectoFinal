@@ -244,13 +244,13 @@ class LoginController {
             $alertas = $usuario->validar_Nueva_Cuenta();
 
             if (empty($alertas)) {
-                $resultado = $usuario->existeUsuario();
+                $resultado = $usuario->exite_usuario();
 
                 if ($resultado->num_rows) {
                     $alertas = Usuario::getAlertas();
                 } else {
                     // Hashear password
-                    $usuario->hashPassword();
+                    $usuario->hash_password();
 
                     // FORZAR ROLES DE ADMINISTRADOR Y CONFIRMADO
                     $usuario->admin = "1";
