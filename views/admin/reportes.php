@@ -1,3 +1,5 @@
+
+<?php include_once __DIR__ . '/../templates/barra.php'; ?>
 <?php
 // --- 1. CONFIGURACIÓN Y CONEXIÓN ---
 ini_set('display_errors', 0);
