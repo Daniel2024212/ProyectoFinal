@@ -1,15 +1,37 @@
 <?php
-// 1. IMPORTAR CONEXIÓN Y FUNCIONES
-include '../includes/database.php';
-include '../includes/funciones.php'; // <--- IMPORTANTE: Asegúrate de que aquí está tu barra (o 'templates/barra.php')
+// --- 1. ACTIVAR MODO DEBUG (Para ver el error real) ---
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-// 2. SEGURIDAD (Si la usas)
-// session_start();
-// isAdmin();
+// --- 2. VERIFICACIÓN DE RUTAS ---
+// Definimos las rutas esperadas
+$ruta_db = '../includes/database.php';
+$ruta_funciones = '../includes/funciones.php'; // O '../includes/functions.php'
 
-// --- LÓGICA DE DATOS CORREGIDA ---
+// Intentamos incluir la base de datos
+if (file_exists($ruta_db)) {
+    include $ruta_db;
+} else {
+    die("<h1 style='color:red'>Error Crítico:</h1> No se encuentra el archivo de base de datos en: <code>" . __DIR__ . "/../includes/database.php</code><br>Verifica la carpeta 'includes'.");
+}
 
-// CONSULTA 1: Ingresos por fecha (Quitamos el WHERE CURDATE para ver todo el historial de prueba)
+// Intentamos incluir las funciones (barra de navegación)
+if (file_exists($ruta_funciones)) {
+    include $ruta_funciones;
+} else {
+    // Si no existe, solo mostramos un aviso pero no detenemos la página
+    echo "<div style='background:orange; padding:5px; text-align:center;'>Aviso: No se encontró funciones.php (La barra no se mostrará)</div>";
+}
+
+// --- 3. VERIFICAR CONEXIÓN ---
+if (!isset($db)) {
+    die("<h1 style='color:red'>Error de Conexión:</h1> La variable <code>\$db</code> no existe. Revisa tus credenciales en <code>includes/database.php</code>.");
+}
+
+// --- 4. LÓGICA DE DATOS ---
+
+// CONSULTA 1: Ingresos Históricos
 $sql_ingresos = "
     SELECT 
         c.fecha, 
@@ -18,24 +40,27 @@ $sql_ingresos = "
     INNER JOIN citasServicios cs ON c.id = cs.citaId
     INNER JOIN servicios s ON cs.servicioId = s.id
     GROUP BY c.fecha 
-    ORDER BY c.fecha ASC"; // Orden ASC para que la gráfica vaya de izquierda (antiguo) a derecha (nuevo)
+    ORDER BY c.fecha ASC";
 
 $resultado_ingresos = mysqli_query($db, $sql_ingresos);
+
+// Si la consulta falla, mostramos por qué
+if(!$resultado_ingresos) {
+    die("Error SQL Ingresos: " . mysqli_error($db));
+}
 
 $fechas = []; 
 $ingresos = [];
 $total_ventas_historico = 0;
 
 while($row = mysqli_fetch_assoc($resultado_ingresos)) {
-    // Formatear fecha para que ocupe menos espacio (ej: 11-Dic)
     $fecha_obj = date_create($row['fecha']);
     $fechas[] = date_format($fecha_obj, 'd-M'); 
-    
     $ingresos[] = $row['total_ingresos'];
     $total_ventas_historico += $row['total_ingresos'];
 }
 
-// CONSULTA 2: Servicios más vendidos (Top 5 real)
+// CONSULTA 2: Servicios Top
 $sql_servicios = "
     SELECT 
         s.nombre, 
@@ -48,6 +73,10 @@ $sql_servicios = "
 
 $resultado_servicios = mysqli_query($db, $sql_servicios);
 
+if(!$resultado_servicios) {
+    die("Error SQL Servicios: " . mysqli_error($db));
+}
+
 $servicios_nombres = []; 
 $servicios_cantidad = [];
 
@@ -56,7 +85,6 @@ while($row = mysqli_fetch_assoc($resultado_servicios)) {
     $servicios_cantidad[] = $row['cantidad'];
 }
 
-// KPIS RÁPIDOS
 $top_servicio = $servicios_nombres[0] ?? 'Sin datos';
 $total_dias_registrados = count($fechas);
 ?>
@@ -66,48 +94,34 @@ $total_dias_registrados = count($fechas);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reportes Administración</title>
+    <title>Reportes Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* --- ESTILOS --- */
         :root {
             --fondo-oscuro: #121212;
             --tarjeta-gris: #1e1e1e;
             --texto-blanco: #ffffff;
             --azul-electrico: #3498db;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--fondo-oscuro);
             color: var(--texto-blanco);
             height: 100vh;
             display: flex;
-            flex-direction: column; /* Importante para que la barra quede arriba */
+            flex-direction: column;
             overflow: hidden; 
         }
-
-        /* Ajuste para la barra de navegación que importas */
-        .barra {
-            flex-shrink: 0; /* Evita que la barra se aplaste */
-            z-index: 1000;
-        }
-
-        /* Contenedor principal dividido (Imagen | Datos) */
-        .contenedor-reporte {
-            display: flex;
-            flex: 1; /* Ocupa el resto de la altura */
-            overflow: hidden;
-        }
-
-        /* --- IZQUIERDA: IMAGEN (40%) --- */
+        .barra { flex-shrink: 0; z-index: 1000; }
+        .contenedor-reporte { display: flex; flex: 1; overflow: hidden; }
+        
         .panel-imagen {
             width: 40%;
-            background-image: url('../img/barber-bg.jpg'); /* Verifica esta ruta */
+            /* Asegúrate de subir la imagen barber-bg.jpg a la carpeta img del servidor */
+            background-image: url('../img/barber-bg.jpg'); 
             background-size: cover;
             background-position: center;
             position: relative;
@@ -118,65 +132,31 @@ $total_dias_registrados = count($fechas);
             background: rgba(0,0,0,0.6);
         }
 
-        /* --- DERECHA: DATOS (60%) --- */
         .panel-datos {
             width: 60%;
             padding: 20px;
-            overflow-y: auto; /* Scroll si los datos no caben */
+            overflow-y: auto;
             background-color: var(--fondo-oscuro);
         }
-
-        /* GRID DE TARJETAS */
-        .grid-kpis {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
+        
+        .grid-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
         .card {
             background: var(--tarjeta-gris);
-            border-radius: 15px;
-            padding: 20px 10px;
-            text-align: center;
-            border: 1px solid #333;
+            border-radius: 15px; padding: 20px 10px;
+            text-align: center; border: 1px solid #333;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-
-        .card h3 {
-            color: #888;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-        }
-
-        .card .valor {
-            font-size: 24px;
-            font-weight: 900;
-            color: #fff;
-        }
-        
+        .card h3 { color: #888; font-size: 12px; text-transform: uppercase; margin-bottom: 5px; }
+        .card .valor { font-size: 24px; font-weight: 900; color: #fff; }
         .valor.texto-largo { font-size: 18px; line-height: 1.2; }
 
-        /* GRID GRÁFICAS */
-        .grid-graficas {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            height: 350px; /* Altura fija para gráficas */
-        }
-
+        .grid-graficas { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; height: 350px; }
         .chart-container {
             background: var(--tarjeta-gris);
-            border-radius: 15px;
-            padding: 15px;
-            border: 1px solid #333;
-            position: relative;
-            height: 100%; /* Llenar el grid */
+            border-radius: 15px; padding: 15px;
+            border: 1px solid #333; position: relative; height: 100%;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 900px) {
             body { overflow: auto; }
             .contenedor-reporte { flex-direction: column; }
@@ -191,20 +171,17 @@ $total_dias_registrados = count($fechas);
 <body>
 
     <div class="contenedor-reporte">
-        
         <div class="panel-imagen"></div>
-
         <div class="panel-datos">
-            
             <h2 style="margin-bottom: 20px; font-weight:700;">Panel de Reportes</h2>
 
             <div class="grid-kpis">
                 <div class="card">
-                    <h3>Ingresos Totales (Histórico)</h3>
+                    <h3>Ingresos Históricos</h3>
                     <div class="valor">$ <?php echo number_format($total_ventas_historico, 0); ?></div>
                 </div>
                 <div class="card">
-                    <h3>Días con ventas</h3>
+                    <h3>Días Activos</h3>
                     <div class="valor"><?php echo $total_dias_registrados; ?></div>
                 </div>
                 <div class="card">
@@ -225,15 +202,13 @@ $total_dias_registrados = count($fechas);
     </div>
 
     <script>
-        // Configuración Global Dark Mode
         Chart.defaults.color = '#cccccc';
         Chart.defaults.borderColor = '#333333';
         Chart.defaults.font.family = 'Poppins';
 
-        // 1. Gráfica Ingresos
         const ctx1 = document.getElementById('chartIngresos').getContext('2d');
         new Chart(ctx1, {
-            type: 'line', // Cambié a linea para ver mejor la tendencia histórica
+            type: 'line',
             data: {
                 labels: <?php echo json_encode($fechas); ?>,
                 datasets: [{
@@ -242,22 +217,18 @@ $total_dias_registrados = count($fechas);
                     borderColor: '#3498db',
                     backgroundColor: 'rgba(52, 152, 219, 0.2)',
                     borderWidth: 3,
-                    pointBackgroundColor: '#fff',
                     fill: true,
-                    tension: 0.4 // Curva suave
+                    tension: 0.4
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false }, title: {display: true, text: 'Historial de Ingresos'} },
-                scales: {
-                    y: { beginAtZero: true }
-                }
+                plugins: { legend: { display: false }, title: {display: true, text: 'Historial'} },
+                scales: { y: { beginAtZero: true } }
             }
         });
 
-        // 2. Gráfica Servicios
         const ctx2 = document.getElementById('chartServicios').getContext('2d');
         new Chart(ctx2, {
             type: 'doughnut',
@@ -273,12 +244,9 @@ $total_dias_registrados = count($fechas);
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '65%',
-                plugins: { 
-                    legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true } } 
-                }
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true } } }
             }
         });
     </script>
-
 </body>
 </html>
