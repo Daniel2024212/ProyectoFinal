@@ -4,12 +4,10 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 global $db;
-// Intentar recuperar la conexión si no existe
 if (empty($db)) {
     $ruta_db = __DIR__ . '/../../includes/database.php';
     if (file_exists($ruta_db)) include_once $ruta_db;
 }
-// Validación final
 if (empty($db)) {
     die("<div style='text-align:center; padding:20px; color:red;'>Error: No se pudo conectar a la base de datos.</div>");
 }
@@ -93,14 +91,14 @@ else {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* --- ESTILOS LIGHT MODE (Limpio y sin cosas negras extrañas) --- */
+        /* --- ESTILOS GENERALES --- */
         :root {
-            --bg-body: #f4f6f9;       /* Fondo gris muy suave */
-            --bg-panel: #ffffff;      /* Fondo blanco para tarjetas */
-            --text-main: #333333;     /* Texto oscuro */
-            --text-light: #777777;    /* Texto secundario */
-            --primary: #007bff;       /* Azul principal */
-            --accent: #28a745;        /* Verde para dinero */
+            --bg-body: #f4f6f9;
+            --bg-panel: #ffffff;
+            --text-main: #333333;
+            --text-light: #777777;
+            --primary: #007bff;
+            --accent: #28a745;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -109,119 +107,97 @@ else {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-body);
             color: var(--text-main);
-            height: 100vh;
-            overflow: hidden; /* Evita scroll doble */
+            /* Quitamos height 100vh y overflow hidden para permitir scroll natural */
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Layout dividido */
+        /* Contenedor Flex que ocupa al menos toda la pantalla */
         .contenedor-reporte {
             display: flex;
-            flex: 1;
-            height: 100%;
-            overflow: hidden;
+            min-height: 100vh; /* Asegura que cubra la pantalla */
+            width: 100%;
         }
 
-        /* IZQUIERDA: Imagen */
+        /* IZQUIERDA: Imagen Fija o Estirada */
         .panel-imagen {
             width: 35%;
             background-image: url('../../build/img/barber-bg.jpg');
             background-size: cover;
             background-position: center;
+            background-attachment: fixed; /* EFECTO PARALLAX: La imagen se queda quieta al hacer scroll */
             position: relative;
+            min-height: 100vh; /* Siempre cubre al menos la pantalla */
         }
-        /* Sombra sobre la imagen para estilo */
         .panel-imagen::after {
             content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
             background: rgba(0,0,0,0.3);
         }
 
-        /* DERECHA: Datos (Blanco) */
+        /* DERECHA: Datos (Scroll Natural) */
         .panel-datos {
             width: 65%;
             padding: 40px;
-            overflow-y: auto; /* Scroll vertical solo si es necesario */
-            overflow-x: hidden; /* IMPORTANTE: Quita la barra horizontal negra */
             background-color: var(--bg-body);
+            /* Eliminamos overflow interno */
+            height: auto; 
         }
 
-        /* Títulos */
         h2 { font-weight: 700; margin-bottom: 25px; color: #2c3e50; font-size: 28px; }
 
         /* Filtro */
         .filtro-box {
             background: var(--bg-panel);
             padding: 15px 25px;
-            border-radius: 50px; /* Redondeado moderno */
+            border-radius: 50px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
             display: inline-flex;
             align-items: center;
             gap: 15px;
             margin-bottom: 30px;
+            flex-wrap: wrap; /* Para móviles */
         }
         .filtro-box label { font-size: 14px; font-weight: 600; color: var(--text-light); }
-        .filtro-box input {
-            padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; color: #555; outline: none;
-        }
-        .btn {
-            padding: 8px 20px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 600;
-            transition: 0.3s; border: none; cursor: pointer; display: inline-block;
-        }
+        .filtro-box input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; color: #555; outline: none; }
+        .btn { padding: 8px 20px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 600; transition: 0.3s; border: none; cursor: pointer; display: inline-block; }
         .btn-blue { background: var(--primary); color: white; }
-        .btn-blue:hover { background: #0056b3; box-shadow: 0 4px 10px rgba(0,123,255,0.3); }
+        .btn-blue:hover { background: #0056b3; }
         .btn-red { background: #dc3545; color: white; margin-left: 10px; }
         .btn-red:hover { background: #a71d2a; }
 
-        /* Tarjetas KPIs */
-        .grid-kpis {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
-            margin-bottom: 30px;
-        }
+        /* KPIs */
+        .grid-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
         .card {
-            background: var(--bg-panel);
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); /* Sombra suave */
-            transition: transform 0.2s;
+            background: var(--bg-panel); padding: 25px; border-radius: 15px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); transition: transform 0.2s;
         }
         .card:hover { transform: translateY(-5px); }
         .card h3 { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .card .valor { font-size: 32px; font-weight: 700; color: #333; }
-        
-        /* Gráficas y Tablas */
-        .contenedor-graficas {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 25px;
-            height: 350px;
-        }
+
+        /* Gráficas */
+        .contenedor-graficas { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
         .box-white {
-            background: var(--bg-panel);
-            border-radius: 15px;
-            padding: 20px;
+            background: var(--bg-panel); border-radius: 15px; padding: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            height: 100%;
-            overflow: hidden;
+            height: 400px; /* Altura fija para gráficas */
         }
 
         /* Tabla */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .tabla-container { background: var(--bg-panel); padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 40px; }
+        table { width: 100%; border-collapse: collapse; }
         th { text-align: left; color: var(--text-light); font-size: 13px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         td { padding: 15px 0; border-bottom: 1px solid #eee; font-size: 15px; color: #444; }
         .precio-row { font-weight: 700; color: var(--accent); }
 
         /* Responsive */
         @media (max-width: 900px) {
-            .contenedor-reporte { flex-direction: column; overflow: auto; }
-            .panel-imagen { width: 100%; height: 200px; }
-            .panel-datos { width: 100%; height: auto; }
+            .contenedor-reporte { flex-direction: column; }
+            .panel-imagen { width: 100%; min-height: 200px; height: 200px; position: static; background-attachment: scroll; }
+            .panel-datos { width: 100%; padding: 20px; }
             .grid-kpis, .contenedor-graficas { grid-template-columns: 1fr; }
-            .contenedor-graficas { height: auto; }
-            .box-white { height: 300px; margin-bottom: 20px; }
+            .box-white { height: 300px; }
         }
     </style>
 </head>
@@ -247,22 +223,22 @@ else {
 
         <div class="grid-kpis">
             <div class="card">
-                <h3>Ingresos Totales</h3>
+                <h3>Ingresos</h3>
                 <div class="valor" style="color: var(--accent);">$ <?php echo number_format($total_ingresos, 0); ?></div>
             </div>
             <div class="card">
-                <h3>Citas Realizadas</h3>
+                <h3>Citas</h3>
                 <div class="valor" style="color: var(--primary);"><?php echo $total_citas; ?></div>
             </div>
             <div class="card">
-                <h3>Servicio Top</h3>
+                <h3>Top Servicio</h3>
                 <div class="valor" style="font-size: 20px;"><?php echo $modo_dia ? '(Ver tabla)' : $top_servicio; ?></div>
             </div>
         </div>
 
         <?php if($modo_dia): ?>
             
-            <div class="box-white" style="height: auto;">
+            <div class="tabla-container">
                 <h3 style="margin-bottom:20px; color:#555;">Detalle de Citas</h3>
                 <?php if(mysqli_num_rows($lista_citas_dia) > 0): ?>
                     <table>
@@ -286,7 +262,7 @@ else {
                         </tbody>
                     </table>
                 <?php else: ?>
-                    <p style="text-align:center; padding:30px; color:#999;">No hay citas registradas para este día.</p>
+                    <p style="text-align:center; padding:30px; color:#999;">No hay citas registradas.</p>
                 <?php endif; ?>
             </div>
 
@@ -302,7 +278,6 @@ else {
             </div>
 
             <script>
-                // Colores para fondo blanco
                 Chart.defaults.color = '#666';
                 Chart.defaults.borderColor = '#eee';
                 Chart.defaults.font.family = 'Poppins';
@@ -314,8 +289,7 @@ else {
                         datasets: [{
                             label: 'Ingresos',
                             data: <?php echo json_encode($ingresos_data); ?>,
-                            borderColor: '#007bff',
-                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                            borderColor: '#007bff', backgroundColor: 'rgba(0, 123, 255, 0.1)',
                             fill: true, tension: 0.3, pointRadius: 4
                         }]
                     },
