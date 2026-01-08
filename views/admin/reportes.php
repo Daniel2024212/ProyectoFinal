@@ -119,18 +119,6 @@ else {
             width: 100%;
         }
 
-        /* IZQUIERDA: Imagen con fondo negro de seguridad */
-        .panel-imagen {
-            width: 35%;
-            background-color: #000000; /* ESTO QUITA EL GRIS SI FALLA LA IMAGEN */
-            background-image: url('../../build/img/barber-bg.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            position: relative;
-            border-right: 1px solid var(--border);
-        }
-
         /* DERECHA: Datos */
         .panel-datos {
             width: 65%;
@@ -207,7 +195,6 @@ else {
 <body>
 
 <div class="contenedor-reporte">
-    <div class="panel-imagen"></div>
 
     <div class="panel-datos">
         
