@@ -51,5 +51,10 @@ $router->post('/servicios/actualizar', [ServicioController::class, 'actualizar']
 $router->post('/servicios/eliminar', [ServicioController::class, 'eliminar']);
 $router->get('/admin/reportes', [ReporteController::class, 'index']);
 $router->get('/api/reportes', [ReporteController::class, 'api']);
+
+// Ruta para crear Admin (GET para ver el formulario, POST para enviarlo)
+$router->get('/crear-admin', [LoginController::class, 'crearAdmin']);
+$router->post('/crear-admin', [LoginController::class, 'crearAdmin']);
+
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
 $router->comprobarRutas();
