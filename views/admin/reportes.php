@@ -91,14 +91,15 @@ else {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* --- ESTILOS GENERALES --- */
+        /* --- ESTILOS DARK MODE (Fondo Negro) --- */
         :root {
-            --bg-body: #f4f6f9;
-            --bg-panel: #ffffff;
-            --text-main: #333333;
-            --text-light: #777777;
-            --primary: #007bff;
-            --accent: #28a745;
+            --bg-body: #000000;       /* Negro Puro */
+            --bg-panel: #1a1a1a;      /* Gris muy oscuro para tarjetas */
+            --text-main: #ffffff;     /* Texto Blanco */
+            --text-light: #a0a0a0;    /* Texto Gris Claro */
+            --primary: #3498db;       /* Azul */
+            --accent: #2ecc71;        /* Verde */
+            --border: #333333;        /* Bordes sutiles */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -107,94 +108,101 @@ else {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-body);
             color: var(--text-main);
-            /* Quitamos height 100vh y overflow hidden para permitir scroll natural */
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* Contenedor Flex que ocupa al menos toda la pantalla */
         .contenedor-reporte {
             display: flex;
-            min-height: 100vh; /* Asegura que cubra la pantalla */
+            min-height: 100vh;
             width: 100%;
         }
 
-        /* IZQUIERDA: Imagen Fija o Estirada */
+        /* IZQUIERDA: Imagen con fondo negro de seguridad */
         .panel-imagen {
             width: 35%;
+            background-color: #000000; /* ESTO QUITA EL GRIS SI FALLA LA IMAGEN */
             background-image: url('../../build/img/barber-bg.jpg');
             background-size: cover;
             background-position: center;
-            background-attachment: fixed; /* EFECTO PARALLAX: La imagen se queda quieta al hacer scroll */
+            background-attachment: fixed;
             position: relative;
-            min-height: 100vh; /* Siempre cubre al menos la pantalla */
+            border-right: 1px solid var(--border);
         }
+        /* Capa oscura encima de la imagen */
         .panel-imagen::after {
             content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.5);
         }
 
-        /* DERECHA: Datos (Scroll Natural) */
+        /* DERECHA: Datos */
         .panel-datos {
             width: 65%;
             padding: 40px;
             background-color: var(--bg-body);
-            /* Eliminamos overflow interno */
             height: auto; 
         }
 
-        h2 { font-weight: 700; margin-bottom: 25px; color: #2c3e50; font-size: 28px; }
+        h2 { font-weight: 700; margin-bottom: 25px; color: var(--text-main); font-size: 28px; }
 
         /* Filtro */
         .filtro-box {
             background: var(--bg-panel);
             padding: 15px 25px;
             border-radius: 50px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
             display: inline-flex;
             align-items: center;
             gap: 15px;
             margin-bottom: 30px;
-            flex-wrap: wrap; /* Para móviles */
+            flex-wrap: wrap;
         }
         .filtro-box label { font-size: 14px; font-weight: 600; color: var(--text-light); }
-        .filtro-box input { padding: 8px 12px; border: 1px solid #ddd; border-radius: 8px; color: #555; outline: none; }
+        .filtro-box input { 
+            padding: 8px 12px; border: 1px solid #444; border-radius: 8px; 
+            background: #222; color: #fff; outline: none; 
+            color-scheme: dark; /* Icono del calendario blanco */
+        }
         .btn { padding: 8px 20px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 600; transition: 0.3s; border: none; cursor: pointer; display: inline-block; }
         .btn-blue { background: var(--primary); color: white; }
-        .btn-blue:hover { background: #0056b3; }
-        .btn-red { background: #dc3545; color: white; margin-left: 10px; }
-        .btn-red:hover { background: #a71d2a; }
+        .btn-blue:hover { background: #2980b9; }
+        .btn-red { background: #e74c3c; color: white; margin-left: 10px; }
+        .btn-red:hover { background: #c0392b; }
 
         /* KPIs */
         .grid-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
         .card {
             background: var(--bg-panel); padding: 25px; border-radius: 15px; text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); transition: transform 0.2s;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.2s;
         }
-        .card:hover { transform: translateY(-5px); }
+        .card:hover { transform: translateY(-5px); border-color: var(--primary); }
         .card h3 { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
-        .card .valor { font-size: 32px; font-weight: 700; color: #333; }
+        .card .valor { font-size: 32px; font-weight: 700; color: var(--text-main); }
 
         /* Gráficas */
         .contenedor-graficas { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
         .box-white {
             background: var(--bg-panel); border-radius: 15px; padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            height: 400px; /* Altura fija para gráficas */
+            border: 1px solid var(--border);
+            height: 400px;
         }
 
         /* Tabla */
-        .tabla-container { background: var(--bg-panel); padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-bottom: 40px; }
+        .tabla-container { 
+            background: var(--bg-panel); padding: 25px; border-radius: 15px; 
+            border: 1px solid var(--border); margin-bottom: 40px; 
+        }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: var(--text-light); font-size: 13px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        td { padding: 15px 0; border-bottom: 1px solid #eee; font-size: 15px; color: #444; }
+        th { text-align: left; color: var(--text-light); font-size: 13px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        td { padding: 15px 0; border-bottom: 1px solid #333; font-size: 15px; color: #ddd; }
         .precio-row { font-weight: 700; color: var(--accent); }
 
         /* Responsive */
         @media (max-width: 900px) {
             .contenedor-reporte { flex-direction: column; }
-            .panel-imagen { width: 100%; min-height: 200px; height: 200px; position: static; background-attachment: scroll; }
+            .panel-imagen { width: 100%; height: 200px; position: static; background-attachment: scroll; }
             .panel-datos { width: 100%; padding: 20px; }
             .grid-kpis, .contenedor-graficas { grid-template-columns: 1fr; }
             .box-white { height: 300px; }
@@ -239,7 +247,7 @@ else {
         <?php if($modo_dia): ?>
             
             <div class="tabla-container">
-                <h3 style="margin-bottom:20px; color:#555;">Detalle de Citas</h3>
+                <h3 style="margin-bottom:20px; color:#ddd;">Detalle de Citas</h3>
                 <?php if(mysqli_num_rows($lista_citas_dia) > 0): ?>
                     <table>
                         <thead>
@@ -253,16 +261,16 @@ else {
                         <tbody>
                             <?php while($cita = mysqli_fetch_assoc($lista_citas_dia)): ?>
                                 <tr>
-                                    <td><strong><?php echo $cita['hora']; ?></strong></td>
+                                    <td><strong style="color: var(--primary);"><?php echo $cita['hora']; ?></strong></td>
                                     <td><?php echo $cita['cliente']; ?></td>
-                                    <td style="color:#777; font-size:13px;"><?php echo $cita['servicios']; ?></td>
+                                    <td style="color:#888; font-size:13px;"><?php echo $cita['servicios']; ?></td>
                                     <td class="precio-row">$ <?php echo number_format($cita['total_cita'], 0); ?></td>
                                 </tr>
                             <?php endwhile; ?>
                         </tbody>
                     </table>
                 <?php else: ?>
-                    <p style="text-align:center; padding:30px; color:#999;">No hay citas registradas.</p>
+                    <p style="text-align:center; padding:30px; color:#666;">No hay citas registradas para este día.</p>
                 <?php endif; ?>
             </div>
 
@@ -278,8 +286,9 @@ else {
             </div>
 
             <script>
-                Chart.defaults.color = '#666';
-                Chart.defaults.borderColor = '#eee';
+                // Configuración Dark Mode ChartJS
+                Chart.defaults.color = '#bbbbbb';
+                Chart.defaults.borderColor = '#333333';
                 Chart.defaults.font.family = 'Poppins';
 
                 new Chart(document.getElementById('chartLine'), {
@@ -289,8 +298,8 @@ else {
                         datasets: [{
                             label: 'Ingresos',
                             data: <?php echo json_encode($ingresos_data); ?>,
-                            borderColor: '#007bff', backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                            fill: true, tension: 0.3, pointRadius: 4
+                            borderColor: '#3498db', backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#fff'
                         }]
                     },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} } }
@@ -302,11 +311,11 @@ else {
                         labels: <?php echo json_encode($serv_nombres); ?>,
                         datasets: [{
                             data: <?php echo json_encode($serv_cant); ?>,
-                            backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8'],
+                            backgroundColor: ['#3498db', '#2ecc71', '#f1c40f', '#e74c3c', '#9b59b6'],
                             borderWidth: 0
                         }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: {position:'right'} } }
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: {position:'right', labels:{color:'#fff'}} } }
                 });
             </script>
 
