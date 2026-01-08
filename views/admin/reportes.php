@@ -1,32 +1,29 @@
 <?php
-// --- 1. CONFIGURACIÓN DE ERRORES ---
+// --- 1. CONFIGURACIÓN DE ERRORES (Solo para depuración) ---
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// --- 2. INCLUIR ARCHIVOS (CORREGIDO CON _ONCE) ---
-$ruta_db = '../includes/database.php';
-$ruta_funciones = '../includes/funciones.php';
+// --- 2. RECUPERAR CONEXIÓN GLOBAL ---
+// Al estar dentro de un Router/Controller, a veces la variable $db queda fuera.
+// Intentamos traerla al ámbito local:
+global $db;
 
-// Usamos include_once para evitar el error de "redeclare"
-if (file_exists($ruta_db)) {
-    include_once $ruta_db;
-} else {
-    die("<h1 style='color:red'>Error:</h1> No se encuentra database.php");
-}
-
-if (file_exists($ruta_funciones)) {
-    include_once $ruta_funciones; // <--- ESTO SOLUCIONA TU ERROR
-}
-
-// --- 3. VERIFICAR CONEXIÓN ---
-if (!isset($db)) {
-    // Intenta conectar manualmente si el include no trajo la variable $db
-    // Asegúrate de poner aquí TUS DATOS REALES del hosting si falla
-    $db = mysqli_connect('localhost', 'root', 'root', 'web_salon_db');
-    if(!$db) {
-        die("<h1 style='color:red'>Error de Conexión:</h1> " . mysqli_connect_error());
+// Si $db sigue vacía, intentamos incluir el archivo manualmente usando una ruta absoluta segura
+if (empty($db)) {
+    // __DIR__ es la carpeta actual (views/admin). Subimos 2 niveles para llegar a la raíz y buscar 'includes'
+    $ruta_db = __DIR__ . '/../../includes/database.php';
+    
+    if (file_exists($ruta_db)) {
+        include_once $ruta_db;
     }
+}
+
+// --- 3. VERIFICACIÓN FINAL ---
+if (empty($db)) {
+    // Si sigue fallando, DETENEMOS TODO para no dar errores de SQL falsos.
+    die("<h2 style='color:red; text-align:center; margin-top:50px;'>Error Crítico</h2>
+         <p style='text-align:center;'>No se pudo conectar a la Base de Datos.<br>
+         La variable <code>\$db</code> es nula y no se encontró el archivo en: <br><code>" . ($ruta_db ?? 'Ruta desconocida') . "</code></p>");
 }
 
 // --- 4. LÓGICA DE DATOS ---
@@ -44,9 +41,9 @@ $sql_ingresos = "
 
 $resultado_ingresos = mysqli_query($db, $sql_ingresos);
 
-// Si falla la consulta, muestra el error SQL
 if(!$resultado_ingresos) {
-    die("Error SQL (Ingresos): " . mysqli_error($db));
+    // Muestra el error real de MySQL si la consulta falla
+    die("Error en la consulta SQL (Ingresos): " . mysqli_error($db));
 }
 
 $fechas = []; 
@@ -72,10 +69,6 @@ $sql_servicios = "
     LIMIT 5";
 
 $resultado_servicios = mysqli_query($db, $sql_servicios);
-
-if(!$resultado_servicios) {
-    die("Error SQL (Servicios): " . mysqli_error($db));
-}
 
 $servicios_nombres = []; 
 $servicios_cantidad = [];
@@ -115,14 +108,15 @@ $total_dias_registrados = count($fechas);
             flex-direction: column;
             overflow: hidden; 
         }
-        /* Ajuste para que tu barra de navegación no se rompa */
-        header, .barra { flex-shrink: 0; z-index: 1000; position: relative; }
         
+        /* IMPORTANTE: Ajuste para tu barra de navegación */
         .contenedor-reporte { display: flex; flex: 1; overflow: hidden; }
         
         .panel-imagen {
             width: 40%;
-            background-image: url('../img/barber-bg.jpg'); /* Verifica que esta imagen exista */
+            /* Ajustamos la ruta de la imagen usando ../../ para salir de views/admin */
+            background-image: url('../../build/img/barber-bg.jpg'); 
+            /* O prueba esta si la anterior no sale: url('/build/img/barber-bg.jpg'); */
             background-size: cover;
             background-position: center;
             position: relative;
