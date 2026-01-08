@@ -1,13 +1,16 @@
 <?php
-// 1. INICIAR SESIÓN
+// --- 1. PRIMERO: INICIAR SESIÓN Y DEFINIR VARIABLES ---
 if(!isset($_SESSION)) {
     session_start();
 }
+// Definimos la variable $nombre ANTES de llamar a la barra
+$nombre = $_SESSION['nombre'] ?? '';
 
-// 2. INCLUIR LA BARRA (Esto ya trae el menú de arriba)
+// --- 2. LUEGO: INCLUIR LA BARRA ---
+// Ahora barra.php podrá leer la variable $nombre correctamente
 include_once __DIR__ . '/../templates/barra.php'; 
 
-// 3. CONFIGURACIÓN Y CONEXIÓN
+// --- 3. CONFIGURACIÓN Y CONEXIÓN ---
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
@@ -20,46 +23,31 @@ if (empty($db)) {
     die("<div style='text-align:center; padding:20px; color:red;'>Error: No se pudo conectar a la base de datos.</div>");
 }
 
-// 4. LÓGICA DE FILTRADO
+// --- 4. LÓGICA DE FILTRADO ---
 $fecha_seleccionada = $_GET['fecha'] ?? null;
 $modo_dia = !empty($fecha_seleccionada);
 
-// Variables por defecto
 $titulo = "Reporte General";
-$total_ingresos = 0;
-$total_citas = 0;
-$top_servicio = "N/A";
-$lista_citas_dia = null;
+$total_ingresos = 0; $total_citas = 0; $top_servicio = "N/A"; $lista_citas_dia = null;
 
 // --- CASO A: REPORTE POR DÍA ---
 if ($modo_dia) {
     $titulo = "Reporte del día: " . date("d/m/Y", strtotime($fecha_seleccionada));
     
     // Totales
-    $sql_dia = "SELECT COUNT(DISTINCT c.id) as cant, SUM(s.precio) as total 
-                FROM citas c 
-                LEFT JOIN citasServicios cs ON c.id = cs.citaId 
-                LEFT JOIN servicios s ON cs.servicioId = s.id 
-                WHERE c.fecha = '$fecha_seleccionada'";
+    $sql_dia = "SELECT COUNT(DISTINCT c.id) as cant, SUM(s.precio) as total FROM citas c LEFT JOIN citasServicios cs ON c.id = cs.citaId LEFT JOIN servicios s ON cs.servicioId = s.id WHERE c.fecha = '$fecha_seleccionada'";
     $res_dia = mysqli_query($db, $sql_dia);
     $data_dia = mysqli_fetch_assoc($res_dia);
     $total_ingresos = $data_dia['total'] ?? 0;
     $total_citas = $data_dia['cant'] ?? 0;
 
-    // Tabla Detalle
-    $sql_lista = "SELECT TIME_FORMAT(c.hora, '%H:%i') as hora, CONCAT(u.nombre, ' ', u.apellido) as cliente, 
-                  GROUP_CONCAT(s.nombre SEPARATOR ', ') as servicios, SUM(s.precio) as total_cita 
-                  FROM citas c 
-                  JOIN usuarios u ON c.usuarioId = u.id 
-                  LEFT JOIN citasServicios cs ON c.id = cs.citaId 
-                  LEFT JOIN servicios s ON cs.servicioId = s.id 
-                  WHERE c.fecha = '$fecha_seleccionada' 
-                  GROUP BY c.id ORDER BY c.hora ASC";
+    // Tabla
+    $sql_lista = "SELECT TIME_FORMAT(c.hora, '%H:%i') as hora, CONCAT(u.nombre, ' ', u.apellido) as cliente, GROUP_CONCAT(s.nombre SEPARATOR ', ') as servicios, SUM(s.precio) as total_cita FROM citas c JOIN usuarios u ON c.usuarioId = u.id LEFT JOIN citasServicios cs ON c.id = cs.citaId LEFT JOIN servicios s ON cs.servicioId = s.id WHERE c.fecha = '$fecha_seleccionada' GROUP BY c.id ORDER BY c.hora ASC";
     $lista_citas_dia = mysqli_query($db, $sql_lista);
 } 
 // --- CASO B: REPORTE GENERAL ---
 else {
-    // Totales Históricos
+    // Histórico
     $sql_hist = "SELECT SUM(s.precio) as total FROM citas c JOIN citasServicios cs ON c.id = cs.citaId JOIN servicios s ON cs.servicioId = s.id";
     $res_hist = mysqli_query($db, $sql_hist);
     $total_ingresos = mysqli_fetch_assoc($res_hist)['total'] ?? 0;
@@ -72,18 +60,12 @@ else {
     $sql_g1 = "SELECT c.fecha, SUM(s.precio) as total FROM citas c JOIN citasServicios cs ON c.id = cs.citaId JOIN servicios s ON cs.servicioId = s.id GROUP BY c.fecha ORDER BY c.fecha ASC";
     $res_g1 = mysqli_query($db, $sql_g1);
     $fechas = []; $ingresos_data = [];
-    while($r = mysqli_fetch_assoc($res_g1)) {
-        $fechas[] = date('d-M', strtotime($r['fecha']));
-        $ingresos_data[] = $r['total'];
-    }
+    while($r = mysqli_fetch_assoc($res_g1)) { $fechas[] = date('d-M', strtotime($r['fecha'])); $ingresos_data[] = $r['total']; }
 
     $sql_g2 = "SELECT s.nombre, COUNT(cs.id) as cant FROM servicios s JOIN citasServicios cs ON s.id = cs.servicioId GROUP BY s.nombre ORDER BY cant DESC LIMIT 5";
     $res_g2 = mysqli_query($db, $sql_g2);
     $serv_nombres = []; $serv_cant = [];
-    while($r = mysqli_fetch_assoc($res_g2)) {
-        $serv_nombres[] = $r['nombre'];
-        $serv_cant[] = $r['cant'];
-    }
+    while($r = mysqli_fetch_assoc($res_g2)) { $serv_nombres[] = $r['nombre']; $serv_cant[] = $r['cant']; }
     $top_servicio = $serv_nombres[0] ?? "N/A";
 }
 ?>
@@ -120,7 +102,6 @@ else {
             flex-direction: column;
         }
 
-        /* Contenedor principal */
         .contenedor-reporte {
             display: flex;
             flex-direction: column;
@@ -139,7 +120,6 @@ else {
 
         h2 { font-weight: 700; margin-bottom: 25px; color: var(--text-main); font-size: 28px; }
 
-        /* Filtro */
         .filtro-box {
             background: var(--bg-panel);
             padding: 15px 25px;
@@ -154,8 +134,7 @@ else {
         .filtro-box label { font-size: 14px; font-weight: 600; color: var(--text-light); }
         .filtro-box input { 
             padding: 8px 12px; border: 1px solid #444; border-radius: 8px; 
-            background: #222; color: #fff; outline: none; 
-            color-scheme: dark;
+            background: #222; color: #fff; outline: none; color-scheme: dark;
         }
         .btn { padding: 8px 20px; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 600; transition: 0.3s; border: none; cursor: pointer; display: inline-block; }
         .btn-blue { background: var(--primary); color: white; }
@@ -163,7 +142,6 @@ else {
         .btn-red { background: #e74c3c; color: white; margin-left: 10px; }
         .btn-red:hover { background: #c0392b; }
 
-        /* KPIs */
         .grid-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
         .card {
             background: var(--bg-panel); padding: 25px; border-radius: 15px; text-align: center;
@@ -174,7 +152,6 @@ else {
         .card h3 { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         .card .valor { font-size: 32px; font-weight: 700; color: var(--text-main); }
 
-        /* Gráficas y Tablas */
         .contenedor-graficas { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 30px; }
         .box-white {
             background: var(--bg-panel); border-radius: 15px; padding: 20px;
