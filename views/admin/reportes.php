@@ -1,32 +1,32 @@
 <?php
-// --- 1. ACTIVAR MODO DEBUG (Para ver el error real) ---
+// --- 1. CONFIGURACIÓN DE ERRORES ---
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// --- 2. VERIFICACIÓN DE RUTAS ---
-// Definimos las rutas esperadas
+// --- 2. INCLUIR ARCHIVOS (CORREGIDO CON _ONCE) ---
 $ruta_db = '../includes/database.php';
-$ruta_funciones = '../includes/funciones.php'; // O '../includes/functions.php'
+$ruta_funciones = '../includes/funciones.php';
 
-// Intentamos incluir la base de datos
+// Usamos include_once para evitar el error de "redeclare"
 if (file_exists($ruta_db)) {
-    include $ruta_db;
+    include_once $ruta_db;
 } else {
-    die("<h1 style='color:red'>Error Crítico:</h1> No se encuentra el archivo de base de datos en: <code>" . __DIR__ . "/../includes/database.php</code><br>Verifica la carpeta 'includes'.");
+    die("<h1 style='color:red'>Error:</h1> No se encuentra database.php");
 }
 
-// Intentamos incluir las funciones (barra de navegación)
 if (file_exists($ruta_funciones)) {
-    include $ruta_funciones;
-} else {
-    // Si no existe, solo mostramos un aviso pero no detenemos la página
-    echo "<div style='background:orange; padding:5px; text-align:center;'>Aviso: No se encontró funciones.php (La barra no se mostrará)</div>";
+    include_once $ruta_funciones; // <--- ESTO SOLUCIONA TU ERROR
 }
 
 // --- 3. VERIFICAR CONEXIÓN ---
 if (!isset($db)) {
-    die("<h1 style='color:red'>Error de Conexión:</h1> La variable <code>\$db</code> no existe. Revisa tus credenciales en <code>includes/database.php</code>.");
+    // Intenta conectar manualmente si el include no trajo la variable $db
+    // Asegúrate de poner aquí TUS DATOS REALES del hosting si falla
+    $db = mysqli_connect('localhost', 'root', 'root', 'web_salon_db');
+    if(!$db) {
+        die("<h1 style='color:red'>Error de Conexión:</h1> " . mysqli_connect_error());
+    }
 }
 
 // --- 4. LÓGICA DE DATOS ---
@@ -44,9 +44,9 @@ $sql_ingresos = "
 
 $resultado_ingresos = mysqli_query($db, $sql_ingresos);
 
-// Si la consulta falla, mostramos por qué
+// Si falla la consulta, muestra el error SQL
 if(!$resultado_ingresos) {
-    die("Error SQL Ingresos: " . mysqli_error($db));
+    die("Error SQL (Ingresos): " . mysqli_error($db));
 }
 
 $fechas = []; 
@@ -74,7 +74,7 @@ $sql_servicios = "
 $resultado_servicios = mysqli_query($db, $sql_servicios);
 
 if(!$resultado_servicios) {
-    die("Error SQL Servicios: " . mysqli_error($db));
+    die("Error SQL (Servicios): " . mysqli_error($db));
 }
 
 $servicios_nombres = []; 
@@ -115,13 +115,14 @@ $total_dias_registrados = count($fechas);
             flex-direction: column;
             overflow: hidden; 
         }
-        .barra { flex-shrink: 0; z-index: 1000; }
+        /* Ajuste para que tu barra de navegación no se rompa */
+        header, .barra { flex-shrink: 0; z-index: 1000; position: relative; }
+        
         .contenedor-reporte { display: flex; flex: 1; overflow: hidden; }
         
         .panel-imagen {
             width: 40%;
-            /* Asegúrate de subir la imagen barber-bg.jpg a la carpeta img del servidor */
-            background-image: url('../img/barber-bg.jpg'); 
+            background-image: url('../img/barber-bg.jpg'); /* Verifica que esta imagen exista */
             background-size: cover;
             background-position: center;
             position: relative;
