@@ -136,4 +136,50 @@ class Usuario extends ActiveRecord {
             return true;
         }
     }
+
+    // --- PEGAR ESTO DENTRO DE LA CLASE USUARIO (models/Usuario.php) ---
+
+    // Validar el registro de nuevos usuarios
+    public function validarNuevaCuenta() {
+        if(!$this->nombre) {
+            self::$alertas['error'][] = 'El Nombre es Obligatorio';
+        }
+        if(!$this->apellido) {
+            self::$alertas['error'][] = 'El Apellido es Obligatorio';
+        }
+        if(!$this->telefono) {
+            self::$alertas['error'][] = 'El Teléfono es Obligatorio';
+        }
+        if(!$this->email) {
+            self::$alertas['error'][] = 'El Email es Obligatorio';
+        }
+        if(!$this->password) {
+            self::$alertas['error'][] = 'El Password es Obligatorio';
+        }
+        if(strlen($this->password) < 6) {
+            self::$alertas['error'][] = 'El password debe contener al menos 6 caracteres';
+        }
+
+        return self::$alertas;
+    }
+
+    // Revisa si el usuario ya existe
+    public function existeUsuario() {
+        $query = " SELECT * FROM " . self::$tabla . " WHERE email = '" . $this->email . "' LIMIT 1";
+
+        $resultado = self::$db->query($query);
+
+        if($resultado->num_rows) {
+            self::$alertas['error'][] = 'El Usuario ya esta registrado';
+        }
+
+        return $resultado;
+    }
+
+    // Hashear el password
+    public function hashPassword() {
+        $this->password = password_hash($this->password, PASSWORD_BCRYPT);
+    }
+
+    // --- FIN DE LO QUE DEBES PEGAR ---
 }
