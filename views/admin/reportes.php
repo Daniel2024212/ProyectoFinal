@@ -1,40 +1,64 @@
 <?php
-// --- LÓGICA PHP (Igual que antes, solo obtenemos los datos) ---
+// 1. IMPORTAR CONEXIÓN Y FUNCIONES
 include '../includes/database.php';
+include '../includes/funciones.php'; // <--- IMPORTANTE: Asegúrate de que aquí está tu barra (o 'templates/barra.php')
 
-// 1. Datos de Ingresos
+// 2. SEGURIDAD (Si la usas)
+// session_start();
+// isAdmin();
+
+// --- LÓGICA DE DATOS CORREGIDA ---
+
+// CONSULTA 1: Ingresos por fecha (Quitamos el WHERE CURDATE para ver todo el historial de prueba)
 $sql_ingresos = "
-    SELECT c.fecha, SUM(s.precio) as total_ingresos
+    SELECT 
+        c.fecha, 
+        SUM(s.precio) as total_ingresos
     FROM citas c
-    LEFT JOIN citasServicios cs ON c.id = cs.citaId
-    LEFT JOIN servicios s ON cs.servicioId = s.id
-    WHERE c.fecha <= CURDATE() 
-    GROUP BY c.fecha ORDER BY c.fecha DESC LIMIT 7"; // Limitado a 7 para que se vea limpio
+    INNER JOIN citasServicios cs ON c.id = cs.citaId
+    INNER JOIN servicios s ON cs.servicioId = s.id
+    GROUP BY c.fecha 
+    ORDER BY c.fecha ASC"; // Orden ASC para que la gráfica vaya de izquierda (antiguo) a derecha (nuevo)
+
 $resultado_ingresos = mysqli_query($db, $sql_ingresos);
 
-$fechas = []; $ingresos = [];
+$fechas = []; 
+$ingresos = [];
+$total_ventas_historico = 0;
+
 while($row = mysqli_fetch_assoc($resultado_ingresos)) {
-    $fechas[] = date('d-M', strtotime($row['fecha'])); // Formato corto
+    // Formatear fecha para que ocupe menos espacio (ej: 11-Dic)
+    $fecha_obj = date_create($row['fecha']);
+    $fechas[] = date_format($fecha_obj, 'd-M'); 
+    
     $ingresos[] = $row['total_ingresos'];
+    $total_ventas_historico += $row['total_ingresos'];
 }
 
-// 2. Datos de Servicios (Pastel)
+// CONSULTA 2: Servicios más vendidos (Top 5 real)
 $sql_servicios = "
-    SELECT s.nombre, COUNT(cs.id) as cantidad
+    SELECT 
+        s.nombre, 
+        COUNT(cs.id) as cantidad
     FROM servicios s
     LEFT JOIN citasServicios cs ON s.id = cs.servicioId
-    GROUP BY s.nombre ORDER BY cantidad DESC LIMIT 5";
+    GROUP BY s.nombre 
+    ORDER BY cantidad DESC 
+    LIMIT 5";
+
 $resultado_servicios = mysqli_query($db, $sql_servicios);
 
-$servicios_nombres = []; $servicios_cantidad = [];
+$servicios_nombres = []; 
+$servicios_cantidad = [];
+
 while($row = mysqli_fetch_assoc($resultado_servicios)) {
     $servicios_nombres[] = $row['nombre'];
     $servicios_cantidad[] = $row['cantidad'];
 }
 
-// 3. KPIs Rápidos (Totales generales)
-$total_ventas_hoy = $ingresos[0] ?? 0;
+// KPIS RÁPIDOS
 $top_servicio = $servicios_nombres[0] ?? 'Sin datos';
+$total_dias_registrados = count($fechas);
 ?>
 
 <!DOCTYPE html>
@@ -42,182 +66,198 @@ $top_servicio = $servicios_nombres[0] ?? 'Sin datos';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin</title>
+    <title>Reportes Administración</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        /* --- ESTILOS GENERALES --- */
+        /* --- ESTILOS --- */
+        :root {
+            --fondo-oscuro: #121212;
+            --tarjeta-gris: #1e1e1e;
+            --texto-blanco: #ffffff;
+            --azul-electrico: #3498db;
+        }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
             font-family: 'Poppins', sans-serif;
+            background-color: var(--fondo-oscuro);
+            color: var(--texto-blanco);
             height: 100vh;
-            display: flex; /* Layout dividido */
-            overflow: hidden; /* Evita scroll en el body principal */
+            display: flex;
+            flex-direction: column; /* Importante para que la barra quede arriba */
+            overflow: hidden; 
+        }
+
+        /* Ajuste para la barra de navegación que importas */
+        .barra {
+            flex-shrink: 0; /* Evita que la barra se aplaste */
+            z-index: 1000;
+        }
+
+        /* Contenedor principal dividido (Imagen | Datos) */
+        .contenedor-reporte {
+            display: flex;
+            flex: 1; /* Ocupa el resto de la altura */
+            overflow: hidden;
         }
 
         /* --- IZQUIERDA: IMAGEN (40%) --- */
         .panel-imagen {
-            flex: 0 0 40%;
-            background-image: url('../img/barber-bg.jpg'); /* ASEGÚRATE DE TENER ESTA IMAGEN */
+            width: 40%;
+            background-image: url('../img/barber-bg.jpg'); /* Verifica esta ruta */
             background-size: cover;
             background-position: center;
             position: relative;
+            border-right: 1px solid #333;
         }
-        /* Filtro oscuro sobre la imagen para que se vea elegante */
         .panel-imagen::after {
             content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.6);
         }
 
         /* --- DERECHA: DATOS (60%) --- */
         .panel-datos {
-            flex: 1;
-            background-color: #f4f7fc;
-            padding: 30px;
-            overflow-y: auto; /* Scroll solo en los datos si es necesario */
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+            width: 60%;
+            padding: 20px;
+            overflow-y: auto; /* Scroll si los datos no caben */
+            background-color: var(--fondo-oscuro);
         }
 
-        /* --- TARJETAS SUPERIORES --- */
+        /* GRID DE TARJETAS */
         .grid-kpis {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 10px;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
         .card {
-            background: black;
-            border-radius: 20px; /* Bordes muy redondeados */
-            padding: 25px 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            background: var(--tarjeta-gris);
+            border-radius: 15px;
+            padding: 20px 10px;
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            min-height: 150px;
+            border: 1px solid #333;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         .card h3 {
-            color: #95a5a6;
-            font-size: 14px;
+            color: #888;
+            font-size: 12px;
             text-transform: uppercase;
-            font-weight: 700;
-            margin-bottom: 10px;
             letter-spacing: 1px;
+            margin-bottom: 5px;
         }
 
         .card .valor {
-            color: #2c3e50;
-            font-size: 28px;
-            font-weight: 900; /* Letra extra gruesa */
-            line-height: 1.1;
+            font-size: 24px;
+            font-weight: 900;
+            color: #fff;
         }
+        
+        .valor.texto-largo { font-size: 18px; line-height: 1.2; }
 
-        /* Estilo específico para la tarjeta de texto largo */
-        .valor.texto-largo { font-size: 22px; }
-
-        /* --- GRÁFICAS --- */
+        /* GRID GRÁFICAS */
         .grid-graficas {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            height: 100%;
+            gap: 15px;
+            height: 350px; /* Altura fija para gráficas */
         }
 
         .chart-container {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: var(--tarjeta-gris);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid #333;
+            position: relative;
+            height: 100%; /* Llenar el grid */
         }
 
-        /* Responsive para móviles */
+        /* RESPONSIVE */
         @media (max-width: 900px) {
-            body { flex-direction: column; overflow: auto; }
-            .panel-imagen { height: 200px; flex: none; }
+            body { overflow: auto; }
+            .contenedor-reporte { flex-direction: column; }
+            .panel-imagen { width: 100%; height: 200px; }
+            .panel-datos { width: 100%; }
             .grid-kpis { grid-template-columns: 1fr; }
-            .grid-graficas { grid-template-columns: 1fr; }
+            .grid-graficas { grid-template-columns: 1fr; height: auto; }
+            .chart-container { height: 300px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="panel-imagen">
-        </div>
-
-    <div class="panel-datos">
+    <div class="contenedor-reporte">
         
-        <div class="grid-kpis">
-            <div class="card">
-                <h3>Ventas Hoy</h3>
-                <div class="valor">$ <?php echo number_format($total_ventas_hoy, 0); ?></div>
+        <div class="panel-imagen"></div>
+
+        <div class="panel-datos">
+            
+            <h2 style="margin-bottom: 20px; font-weight:700;">Panel de Reportes</h2>
+
+            <div class="grid-kpis">
+                <div class="card">
+                    <h3>Ingresos Totales (Histórico)</h3>
+                    <div class="valor">$ <?php echo number_format($total_ventas_historico, 0); ?></div>
+                </div>
+                <div class="card">
+                    <h3>Días con ventas</h3>
+                    <div class="valor"><?php echo $total_dias_registrados; ?></div>
+                </div>
+                <div class="card">
+                    <h3>Top Servicio</h3>
+                    <div class="valor texto-largo"><?php echo $top_servicio; ?></div>
+                </div>
             </div>
 
-            <div class="card">
-                <h3>Fecha</h3>
-                <div class="valor"><?php echo date('d M'); ?></div>
-            </div>
-
-            <div class="card">
-                <h3>Top Servicio</h3>
-                <div class="valor texto-largo">
-                    <?php echo $top_servicio; ?>
+            <div class="grid-graficas">
+                <div class="chart-container">
+                    <canvas id="chartIngresos"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartServicios"></canvas>
                 </div>
             </div>
         </div>
-
-        <div class="grid-graficas">
-            
-            <div class="chart-container">
-                <canvas id="chartIngresos"></canvas>
-            </div>
-
-            <div class="chart-container">
-                <canvas id="chartServicios"></canvas>
-            </div>
-        </div>
-
     </div>
 
     <script>
-        // Configuración común para que se vea limpio
+        // Configuración Global Dark Mode
+        Chart.defaults.color = '#cccccc';
+        Chart.defaults.borderColor = '#333333';
         Chart.defaults.font.family = 'Poppins';
-        Chart.defaults.color = '#666';
 
-        // 1. Gráfica de Ingresos (Barras azules)
+        // 1. Gráfica Ingresos
         const ctx1 = document.getElementById('chartIngresos').getContext('2d');
         new Chart(ctx1, {
-            type: 'bar',
+            type: 'line', // Cambié a linea para ver mejor la tendencia histórica
             data: {
-                labels: <?php echo json_encode(array_reverse($fechas)); ?>,
+                labels: <?php echo json_encode($fechas); ?>,
                 datasets: [{
                     label: 'Ingresos ($)',
-                    data: <?php echo json_encode(array_reverse($ingresos)); ?>,
-                    backgroundColor: '#3498db',
-                    borderRadius: 5, // Bordes redondeados en las barras
-                    barThickness: 20
+                    data: <?php echo json_encode($ingresos); ?>,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    fill: true,
+                    tension: 0.4 // Curva suave
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false }, title: { display: true, text: 'Ingresos Semanales' } },
+                plugins: { legend: { display: false }, title: {display: true, text: 'Historial de Ingresos'} },
                 scales: {
-                    y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
-                    x: { grid: { display: false } }
+                    y: { beginAtZero: true }
                 }
             }
         });
 
-        // 2. Gráfica de Servicios (Dona de colores)
+        // 2. Gráfica Servicios
         const ctx2 = document.getElementById('chartServicios').getContext('2d');
         new Chart(ctx2, {
             type: 'doughnut',
@@ -225,20 +265,20 @@ $top_servicio = $servicios_nombres[0] ?? 'Sin datos';
                 labels: <?php echo json_encode($servicios_nombres); ?>,
                 datasets: [{
                     data: <?php echo json_encode($servicios_cantidad); ?>,
-                    backgroundColor: ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9b59b6'],
-                    borderWidth: 0,
-                    hoverOffset: 10
+                    backgroundColor: ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6'],
+                    borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '60%', // Hace el agujero de la dona más grande
+                cutout: '65%',
                 plugins: { 
-                    legend: { position: 'right', labels: { boxWidth: 10, usePointStyle: true } } 
+                    legend: { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true } } 
                 }
             }
         });
     </script>
+
 </body>
 </html>
