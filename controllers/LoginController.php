@@ -241,7 +241,7 @@ class LoginController {
             $usuario->sincronizar($_POST);
             
             // IMPORTANTE: Esta función debe existir en tu modelo Usuario.php
-            $alertas = $usuario->validarNuevaCuenta();
+            $alertas = $usuario->validar_Nueva_Cuenta();
 
             if (empty($alertas)) {
                 $resultado = $usuario->existeUsuario();
