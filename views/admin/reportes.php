@@ -130,11 +130,6 @@ else {
             position: relative;
             border-right: 1px solid var(--border);
         }
-        /* Capa oscura encima de la imagen */
-        .panel-imagen::after {
-            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.5);
-        }
 
         /* DERECHA: Datos */
         .panel-datos {
