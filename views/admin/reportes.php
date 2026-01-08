@@ -1,17 +1,14 @@
 <?php
-// 1. INICIAR SESIÓN (Siempre al principio)
+// --- 1. INICIAR SESIÓN Y CONEXIÓN ---
 if(!isset($_SESSION)) {
     session_start();
 }
 
-// 2. INCLUIR LA BARRA DE NAVEGACIÓN OFICIAL
-include_once __DIR__ . '/../templates/barra.php'; 
-
-// 3. CONFIGURACIÓN Y CONEXIÓN
 ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 global $db;
+// Conexión segura
 if (empty($db)) {
     $ruta_db = __DIR__ . '/../../includes/database.php';
     if (file_exists($ruta_db)) include_once $ruta_db;
@@ -20,7 +17,7 @@ if (empty($db)) {
     die("<div style='text-align:center; padding:20px; color:red;'>Error: No se pudo conectar a la base de datos.</div>");
 }
 
-// 4. LÓGICA DE FILTRADO
+// --- 2. LÓGICA DE FILTRADO ---
 $fecha_seleccionada = $_GET['fecha'] ?? null;
 $modo_dia = !empty($fecha_seleccionada);
 
@@ -128,6 +125,7 @@ else {
             width: 100%;
             flex: 1;
             align-items: center;
+            justify-content: center; /* Centrar verticalmente si hay poco contenido */
         }
 
         .panel-datos {
