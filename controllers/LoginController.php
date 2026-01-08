@@ -239,6 +239,8 @@ class LoginController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $usuario->sincronizar($_POST);
+            
+            // IMPORTANTE: Esta función debe existir en tu modelo Usuario.php
             $alertas = $usuario->validarNuevaCuenta();
 
             if (empty($alertas)) {
@@ -250,7 +252,7 @@ class LoginController {
                     // Hashear password
                     $usuario->hashPassword();
 
-                    // FORZAR ROLES DE ADMINISTRADOR
+                    // FORZAR ROLES DE ADMINISTRADOR Y CONFIRMADO
                     $usuario->admin = "1";
                     $usuario->confirmado = "1";
                     $usuario->token = "";
@@ -259,7 +261,7 @@ class LoginController {
                     $resultado = $usuario->guardar();
 
                     if ($resultado) {
-                        // Muestra mensaje de éxito en lugar de redireccionar
+                        // Muestra mensaje de éxito
                         Usuario::setAlerta('exito', 'Administrador Creado Correctamente');
                         $alertas = Usuario::getAlertas();
                         
