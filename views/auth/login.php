@@ -26,9 +26,7 @@
 
 <div class="contenedor-mapa">
     <h2>Nuestra Ubicación</h2>
-    <p>Ven a visitarnos al salón</p>
-    
-    <div id="mapa"></div>
+    <div id="mapa" style="height: 500px; width: 100%; border: 1px solid #ccc;"></div>
 </div>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
