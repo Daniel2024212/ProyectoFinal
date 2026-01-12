@@ -23,3 +23,14 @@
     <a href="/crear-cuenta">¿Aún no tienes una cuenta? Crear una</a>
     <a href="/olvide">¿Olvidaste tu password?</a>
 </div>
+
+<div class="contenedor-mapa">
+    <h2>Nuestra Ubicación</h2>
+    <p>Ven a visitarnos al salón</p>
+    
+    <div id="mapa"></div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="build/js/mapa.js"></script>
