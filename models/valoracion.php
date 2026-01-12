@@ -2,26 +2,36 @@
 
 namespace Model;
 
-use Models\ActiveRecord;
-
 class Valoracion extends ActiveRecord {
-    protected static $tabla = 'valoraciones';
-    // Sincronizado con SQL: id, cita_id, usuario_id, estrellas, comentario, creado
-    protected static $columnasDB = ['id', 'cita_id', 'usuario_id', 'estrellas', 'comentario', 'creado'];
+    // CAMBIO AQUÍ: Apuntamos a la nueva tabla
+    protected static $tabla = 'resenas'; 
+    
+    // El resto de columnas se mantiene igual
+    protected static $columnasDB = ['id', 'usuarioId', 'citaId', 'calificacion', 'comentario', 'fecha'];
 
     public $id;
-    public $cita_id;
-    public $usuario_id;
-    public $estrellas;
+    public $usuarioId;
+    public $citaId;
+    public $calificacion;
     public $comentario;
-    public $creado;
+    public $fecha;
 
     public function __construct($args = []) {
         $this->id = $args['id'] ?? null;
-        $this->cita_id = $args['cita_id'] ?? null;
-        $this->usuario_id = $args['usuario_id'] ?? null;
-        $this->estrellas = $args['estrellas'] ?? null;
+        $this->usuarioId = $args['usuarioId'] ?? '';
+        $this->citaId = $args['citaId'] ?? '';
+        $this->calificacion = $args['calificacion'] ?? '';
         $this->comentario = $args['comentario'] ?? '';
-        $this->creado = date('Y-m-d H:i:s');
+        $this->fecha = date('Y-m-d H:i:s');
+    }
+
+    public function validar() {
+        if(!$this->calificacion) {
+            self::$alertas['error'][] = 'Debes seleccionar una estrella';
+        }
+        if(!$this->comentario) {
+            self::$alertas['error'][] = 'El comentario es obligatorio';
+        }
+        return self::$alertas;
     }
 }

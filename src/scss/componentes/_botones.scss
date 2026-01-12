@@ -3,6 +3,9 @@
 
 .boton {
     @include m.boton(v.$azul, v.$blanco);
+    padding: 1.5rem 3rem;  /* Arriba/Abajo  Izquierda/Derecha */
+    font-size: 2rem;       /* Tamaño del texto */
+    font-weight: 700;
 }
 
 .boton-eliminar {

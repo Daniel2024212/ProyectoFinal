@@ -1,62 +1,47 @@
 <?php
-namespace Controllers\API;
+
+namespace Controllers;
+
 use MVC\Router;
 use Model\Valoracion;
-use Classes\ValoracionService;
-use Models\Cita;
 
-class ValoracionesController {
+class ValoracionController {
 
-    public static function crear() {
-        $input = json_decode(file_get_contents('php://input'), true);
-
-        $usuarioId  = $input['usuario_id'] ?? null;
-        $citaId     = $input['cita_id'] ?? null;
-        $estrellas  = $input['estrellas'] ?? 0;
-        $comentario = $input['comentario'] ?? '';
-
-        // 1. Validaciones
-        if(!$usuarioId || !$citaId) {
-            echo json_encode(['success' => false, 'error' => 'Usuario y Cita son obligatorios']);
-            return;
+    public static function crear(Router $router) {
+        // Verificar sesión
+        if(!isset($_SESSION)) session_start();
+        
+        // Proteger ruta
+        if(!isset($_SESSION['login'])) {
+            header('Location: /');
         }
 
-        if($estrellas < 1 || $estrellas > 5) {
-            echo json_encode(['success' => false, 'error' => 'La calificación debe ser de 1 a 5']);
-            return;
+        $alertas = [];
+        $valoracion = new Valoracion;
+        
+        // Obtener ID de la cita de la URL
+        $citaId = $_GET['id'] ?? null;
+
+        if($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $valoracion->sincronizar($_POST);
+            $valoracion->usuarioId = $_SESSION['id'];
+            $valoracion->citaId = $citaId;
+
+            $alertas = $valoracion->validar();
+
+            if(empty($alertas)) {
+                $resultado = $valoracion->guardar();
+                if($resultado) {
+                    // Redirigir a 'mis citas' tras guardar
+                    header('Location: /cita'); 
+                }
+            }
         }
 
-        // 2. Verificar existencia de la cita
-        $cita = Cita::find($citaId);
-        if(!$cita) {
-            echo json_encode(['success' => false, 'error' => 'La cita especificada no existe']);
-            return;
-        }
-
-        // 3. Regla de Negocio: Evitar duplicados
-        // Verificamos si este usuario YA calificó esta cita específica.
-        // Usamos SQL directo para mayor eficiencia en la consulta compuesta.
-        $query = "SELECT * FROM valoraciones WHERE cita_id = '{$citaId}' AND usuario_id = '{$usuarioId}' LIMIT 1";
-        $existe = Valoracion::SQL($query);
-
-        if(!empty($existe)) {
-            echo json_encode(['success' => false, 'error' => 'Ya has valorado esta cita anteriormente']);
-            return;
-        }
-
-        // 4. Guardar y Sanitizar
-        $valoracion = new Valoracion([
-            'usuario_id' => $usuarioId,
-            'cita_id'    => $citaId,
-            'estrellas'  => $estrellas,
-            'comentario' => htmlspecialchars($comentario) // Sanitizar HTML para evitar XSS
-        ]);
-
-        $resultado = $valoracion->guardar();
-
-        echo json_encode([
-            'success' => $resultado['resultado'],
-            'mensaje' => $resultado['resultado'] ? 'Valoración guardada correctamente' : 'Error al guardar'
+        $router->render('valoraciones/crear', [
+            'alertas' => $alertas,
+            'valoracion' => $valoracion,
+            'citaId' => $citaId
         ]);
     }
 }

@@ -5,6 +5,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 require_once __DIR__ . '/../includes/app.php';
+use Controllers\ValoracionController;
 
 use Controllers\AdminController;
 use Controllers\CitaMicroservice;
@@ -59,6 +60,9 @@ $router->get('/api/reportes', [ReporteController::class, 'api']);
 // Ruta para crear Admin (GET para ver el formulario, POST para enviarlo)
 $router->get('/crear-admin', [LoginController::class, 'crearAdmin']);
 $router->post('/crear-admin', [LoginController::class, 'crearAdmin']);
+
+$router->get('/valorar', [ValoracionController::class, 'crear']);
+$router->post('/valorar', [ValoracionController::class, 'crear']);
 
 // Comprueba y valida las rutas, que existan y les asigna las funciones del Controlador
 $router->comprobarRutas();

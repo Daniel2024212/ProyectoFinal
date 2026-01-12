@@ -50,6 +50,27 @@
     </div>
 </div>
 
+<a href="/valorar?id=<?php echo $cita->id; ?>" class="boton-valorar">
+    ★ Calificar
+</a>
+
+<style>
+    .boton-valorar {
+        background-color: #ffc700; /* Amarillo */
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+        text-shadow: 0px 1px 2px rgba(0,0,0,0.2);
+    }
+    .boton-valorar:hover {
+        background-color: #e0b000;
+        cursor: pointer;
+    }
+</style>
+
 <?php 
     $script = "
         <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
