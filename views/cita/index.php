@@ -18,7 +18,7 @@
 
     <div id="paso-2" class="seccion">
         <h2>Tus Datos y Cita</h2>
-        <p class="text-center">Elige la fecha y hora de tu cita</p>
+        <p class="text-center">Elige la fecha y hora de tu cita entre las 10:00 y las 18:00</p>
 
         <form class="formulario">
             <div class="campo">
