@@ -1,0 +1,7 @@
+#mapa {
+    height: 400px; /* Altura obligatoria */
+    width: 100%;
+    border-radius: 1rem;
+    margin-top: 2rem;
+    z-index: 1; /* Para que no tape menús desplegables */
+}
