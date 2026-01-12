@@ -8,7 +8,7 @@
         <button class="actual" type="button" data-paso="1">1. Servicios</button>
         <button type="button" data-paso="2">2. Información</button>
         <button type="button" data-paso="3">3. Resumen</button>
-        </nav>
+    </nav>
 
     <div id="paso-1" class="seccion">
         <h2>Elige tus Servicios</h2>
@@ -50,32 +50,93 @@
     </div>
 </div>
 
-<a href="/valorar?id=<?php echo $cita->id; ?>" class="boton-valorar">
-    ★ Calificar
-</a>
+<div class="seccion-historial">
+    <h2>Mis Citas Pasadas</h2>
+    
+    <?php if(isset($citas) && count($citas) > 0): ?>
+        <ul class="listado-citas-cliente">
+            <?php foreach($citas as $cita): ?>
+                <li class="cita-item">
+                    <div class="info-cita">
+                        <?php 
+                            $fechaCita = is_object($cita) ? $cita->fecha : $cita['fecha'];
+                            $horaCita = is_object($cita) ? $cita->hora : $cita['hora'];
+                            $idCita = is_object($cita) ? $cita->id : $cita['id'];
+                        ?>
+                        <p>Fecha: <span><?php echo $fechaCita; ?></span></p>
+                        <p>Hora: <span><?php echo $horaCita; ?></span></p>
+                    </div>
+                    
+                    <div class="acciones-cita">
+                        <a href="/valorar?id=<?php echo $idCita; ?>" class="boton-valorar">
+                            ★ Calificar
+                        </a>
+                    </div>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php else: ?>
+        <p class="text-center">No tienes citas registradas para calificar.</p>
+    <?php endif; ?>
+</div>
 
 <style>
+    /* Separación del historial */
+    .seccion-historial {
+        margin-top: 5rem;
+        padding-top: 3rem;
+        border-top: 1px solid #333;
+    }
+
+    /* Grid de citas */
+    .listado-citas-cliente {
+        list-style: none;
+        padding: 0;
+        display: grid;
+        gap: 2rem;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+    
+    /* Tarjeta de cada cita */
+    .cita-item {
+        background-color: #1a1b1c;
+        padding: 2rem;
+        border-radius: 1rem;
+        border: 1px solid #333;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .info-cita p { margin: 0.5rem 0; color: #fff; }
+    .info-cita span { font-weight: bold; color: #0da6f3; }
+
+    /* Botón Amarillo */
     .boton-valorar {
-        background-color: #ffc700; /* Amarillo */
-        color: #fff;
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
+        background-color: #ffc700;
+        color: #1a1a1a;
+        padding: 1rem 2rem;
+        border-radius: 0.5rem;
         text-decoration: none;
-        font-weight: bold;
+        font-weight: 700;
         font-size: 1.2rem;
-        text-shadow: 0px 1px 2px rgba(0,0,0,0.2);
+        display: inline-block;
+        transition: 0.3s;
     }
     .boton-valorar:hover {
         background-color: #e0b000;
         cursor: pointer;
+        transform: scale(1.05);
     }
 </style>
 
-<?php 
-    $script = "
-        <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
-        <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
-        <script src='build/js/app.js'></script>
-        <script src='build/js/mapa.js'></script>
-    ";
+<?php
+$script = "
+    <script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>
+    <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+    <script src='build/js/app.js'></script>
+    <script src='build/js/mapa.js'></script>
+";
 ?>
